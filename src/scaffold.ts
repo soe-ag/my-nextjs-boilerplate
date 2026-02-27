@@ -27,6 +27,14 @@ export async function scaffold(choices: UserChoices): Promise<void> {
   const cwd = process.cwd()
   const projectDir = path.join(cwd, projectName)
 
+  // ─── Pre-flight check ────────────────────────────────────────────────────
+  if (fs.existsSync(projectDir)) {
+    console.error(
+      `\nError: The directory "${projectName}" already exists in ${cwd}.\nPlease choose a different project name or remove/rename the existing directory.\n`
+    )
+    process.exit(1)
+  }
+
   // ─── Step 1: Run create-next-app ─────────────────────────────────────────
   const s = spinner()
   s.start('Running create-next-app…')
@@ -35,13 +43,11 @@ export async function scaffold(choices: UserChoices): Promise<void> {
   )
   s.stop('create-next-app complete ✓')
 
-  // ─── Step 2: Install mandatory dependencies ───────────────────────────────
+  // ─── Step 2: Install additional dependencies ──────────────────────────────
+  // create-next-app already installs next, react, react-dom, typescript, @types/*, eslint, eslint-config-next
   s.start('Installing core dependencies…')
 
   const deps = [
-    'next@latest',
-    'react@latest',
-    'react-dom@latest',
     'next-themes',
     'lucide-react',
     'clsx',
@@ -50,15 +56,9 @@ export async function scaffold(choices: UserChoices): Promise<void> {
   ]
 
   const devDeps = [
-    'typescript',
-    '@types/node',
-    '@types/react',
-    '@types/react-dom',
     'tailwindcss@^4',
     '@tailwindcss/postcss@^4',
     'tw-animate-css',
-    'eslint',
-    'eslint-config-next',
     'prettier',
     'shadcn@latest',
   ]
@@ -67,7 +67,7 @@ export async function scaffold(choices: UserChoices): Promise<void> {
   runCommand(getInstallCommand(packageManager, devDeps, true), projectDir)
   s.stop('Core dependencies installed ✓')
 
-  // ─── Step 3: Write config files ───────────────────────────────────────────
+  // ─── Step 3: Write non-shadcn config files ────────────────────────────────
   s.start('Writing config files…')
 
   writeFile(
@@ -80,9 +80,6 @@ export async function scaffold(choices: UserChoices): Promise<void> {
     readTemplate('prettier.config.js.template')
   )
 
-  // lib/utils.ts
-  writeFile(path.join(projectDir, 'lib', 'utils.ts'), readTemplate('lib/utils.ts.template'))
-
   s.stop('Config files written ✓')
 
   // ─── Step 4: shadcn init ──────────────────────────────────────────────────
@@ -90,10 +87,38 @@ export async function scaffold(choices: UserChoices): Promise<void> {
   runCommand('npx shadcn@latest init --yes', projectDir)
   s.stop('shadcn/ui initialised ✓')
 
-  // ─── Step 5: Write components.json with chosen settings ───────────────────
-  const componentsJsonTemplate = readTemplate('components.json.template')
-  const componentsJson = componentsJsonTemplate.replace('{{BASE_COLOR}}', shadcnBaseColor)
-  writeFile(path.join(projectDir, 'components.json'), componentsJson)
+  // ─── Step 5: Update components.json with chosen settings ──────────────────
+  // Read what shadcn init generated and update only the fields we need
+  const componentsJsonPath = path.join(projectDir, 'components.json')
+  try {
+    const existing = JSON.parse(fs.readFileSync(componentsJsonPath, 'utf8'))
+    existing.style = 'new-york'
+    existing.rsc = true
+    existing.tsx = true
+    existing.iconLibrary = 'lucide'
+    if (existing.tailwind) {
+      existing.tailwind.baseColor = shadcnBaseColor
+      existing.tailwind.cssVariables = true
+    }
+    existing.aliases = {
+      components: '@/components',
+      utils: '@/lib/utils',
+      ui: '@/components/ui',
+      lib: '@/lib',
+      hooks: '@/hooks',
+    }
+    writeFile(componentsJsonPath, JSON.stringify(existing, null, 2) + '\n')
+  } catch {
+    // Fallback: write from template if reading/parsing fails
+    const componentsJson = readTemplate('components.json.template').replace(
+      '{{BASE_COLOR}}',
+      shadcnBaseColor
+    )
+    writeFile(componentsJsonPath, componentsJson)
+  }
+
+  // ─── Step 5b: Write lib/utils.ts after shadcn init (may overwrite shadcn's) ─
+  writeFile(path.join(projectDir, 'lib', 'utils.ts'), readTemplate('lib/utils.ts.template'))
 
   // ─── Step 6: Add shadcn components ───────────────────────────────────────
   s.start(`Adding ${SHADCN_COMPONENTS.length} shadcn/ui components…`)
@@ -116,10 +141,11 @@ export async function scaffold(choices: UserChoices): Promise<void> {
     writeFile(path.join(convexDir, 'schema.ts'), readTemplate('convex/schema.ts.template'))
     writeFile(path.join(convexDir, 'tsconfig.json'), readTemplate('convex/tsconfig.json.template'))
 
-    // Update package.json scripts
+    // Update package.json scripts — merge to preserve any scripts added by create-next-app
     const pkgJsonPath = path.join(projectDir, 'package.json')
     const pkgJson = JSON.parse(fs.readFileSync(pkgJsonPath, 'utf8'))
     pkgJson.scripts = {
+      ...pkgJson.scripts,
       dev: 'npm-run-all --parallel dev:frontend dev:backend',
       'dev:frontend': 'next dev',
       'dev:backend': 'convex dev',
@@ -132,10 +158,11 @@ export async function scaffold(choices: UserChoices): Promise<void> {
 
     s.stop('Convex setup complete ✓')
   } else {
-    // Update package.json scripts (no-convex version)
+    // Update package.json scripts — merge to preserve any scripts added by create-next-app
     const pkgJsonPath = path.join(projectDir, 'package.json')
     const pkgJson = JSON.parse(fs.readFileSync(pkgJsonPath, 'utf8'))
     pkgJson.scripts = {
+      ...pkgJson.scripts,
       dev: 'next dev',
       build: 'next build',
       start: 'next start',

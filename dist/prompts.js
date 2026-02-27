@@ -13,8 +13,8 @@ async function runPrompts(projectNameArg) {
         validate(value) {
             if (!value || value.trim().length === 0)
                 return 'Project name is required';
-            if (!/^[a-z0-9_-]+$/i.test(value.trim())) {
-                return 'Project name can only contain letters, numbers, hyphens, and underscores';
+            if (!/^[a-z0-9][a-z0-9_-]*$/i.test(value.trim())) {
+                return 'Project name must start with a letter or number and can only contain letters, numbers, hyphens, and underscores';
             }
         },
     });

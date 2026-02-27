@@ -1,4 +1,4 @@
-import { execSync, SpawnSyncReturns } from 'child_process'
+import { execSync } from 'child_process'
 import * as fs from 'fs'
 import * as path from 'path'
 
@@ -16,7 +16,7 @@ export function runCommand(command: string, cwd?: string): void {
       shell: process.platform === 'win32' ? 'cmd.exe' : '/bin/sh',
     })
   } catch (error) {
-    const err = error as SpawnSyncReturns<Buffer>
+    const err = error as Error & { stderr?: Buffer }
     throw new Error(`Command failed: ${command}\n${err.stderr?.toString() ?? ''}`)
   }
 }
