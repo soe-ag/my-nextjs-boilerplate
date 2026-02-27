@@ -1,0 +1,11 @@
+import { defineSchema } from "convex/server";
+
+// Define your Convex database schema here.
+// See https://docs.convex.dev/database/schemas
+export default defineSchema({
+  // Example:
+  // tasks: defineTable({
+  //   title: v.string(),
+  //   completed: v.boolean(),
+  // }),
+});

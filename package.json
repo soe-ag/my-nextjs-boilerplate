@@ -1,0 +1,29 @@
+{
+  "name": "create-ncs-app",
+  "version": "0.1.0",
+  "description": "CLI to scaffold a Next.js + Convex + Shadcn boilerplate project",
+  "bin": {
+    "create-ncs-app": "./bin/index.js"
+  },
+  "files": [
+    "bin",
+    "dist",
+    "templates"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch"
+  },
+  "dependencies": {
+    "@clack/prompts": "^1.0.1"
+  },
+  "devDependencies": {
+    "typescript": "^5",
+    "@types/node": "^20"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "keywords": ["nextjs", "convex", "shadcn", "tailwind", "cli", "boilerplate"],
+  "license": "MIT"
+}
