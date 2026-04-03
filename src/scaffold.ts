@@ -30,10 +30,10 @@ function buildCiWorkflow(packageManager: PackageManager, includeVitest: boolean)
   switch (packageManager) {
     case 'pnpm':
       setupSteps = [
-        '      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4',
+        '      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4.3.0',
         '        with:',
         '          version: 9',
-        '      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4',
+        '      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0',
         '        with:',
         '          node-version: 20',
         "          cache: 'pnpm'",
@@ -43,7 +43,7 @@ function buildCiWorkflow(packageManager: PackageManager, includeVitest: boolean)
       break
     case 'bun':
       setupSteps = [
-        '      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2',
+        '      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0',
         '        with:',
         '          bun-version: latest',
       ].join('\n')
@@ -53,7 +53,7 @@ function buildCiWorkflow(packageManager: PackageManager, includeVitest: boolean)
     case 'npm':
     default:
       setupSteps = [
-        '      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4',
+        '      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0',
         '        with:',
         '          node-version: 20',
         "          cache: 'npm'",
@@ -64,7 +64,7 @@ function buildCiWorkflow(packageManager: PackageManager, includeVitest: boolean)
   }
 
   const steps = [
-    '      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4',
+    '      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1',
     setupSteps,
     `      - name: Install dependencies`,
     `        run: ${installCmd}`,
