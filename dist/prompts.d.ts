@@ -4,6 +4,7 @@ export interface UserChoices {
     packageManager: PackageManager;
     shadcnBaseColor: string;
     includeConvex: boolean;
+    includeVitest: boolean;
     includeRhfZod: boolean;
 }
 export declare function runPrompts(projectNameArg?: string): Promise<UserChoices>;

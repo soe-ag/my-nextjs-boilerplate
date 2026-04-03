@@ -56,8 +56,80 @@ const SHADCN_COMPONENTS = [
     'skeleton',
     'tabs',
 ];
+function buildCiWorkflow(packageManager, includeVitest) {
+    let setupSteps;
+    let installCmd;
+    let runPrefix;
+    switch (packageManager) {
+        case 'pnpm':
+            setupSteps = [
+                '      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4.3.0',
+                '        with:',
+                '          version: 9',
+                '      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0',
+                '        with:',
+                '          node-version: 20',
+                "          cache: 'pnpm'",
+            ].join('\n');
+            installCmd = 'pnpm install --frozen-lockfile';
+            runPrefix = 'pnpm';
+            break;
+        case 'bun':
+            setupSteps = [
+                '      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0',
+                '        with:',
+                '          bun-version: latest',
+            ].join('\n');
+            installCmd = 'bun install --frozen-lockfile';
+            runPrefix = 'bun run';
+            break;
+        case 'npm':
+        default:
+            setupSteps = [
+                '      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0',
+                '        with:',
+                '          node-version: 20',
+                "          cache: 'npm'",
+            ].join('\n');
+            installCmd = 'npm ci';
+            runPrefix = 'npm run';
+            break;
+    }
+    const steps = [
+        '      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1',
+        setupSteps,
+        `      - name: Install dependencies`,
+        `        run: ${installCmd}`,
+        `      - name: Lint`,
+        `        run: ${runPrefix} lint`,
+        `      - name: Type check`,
+        `        run: ${runPrefix} typecheck`,
+    ];
+    if (includeVitest) {
+        steps.push(`      - name: Test`, `        run: ${runPrefix} test`);
+    }
+    steps.push(`      - name: Build`, `        run: ${runPrefix} build`);
+    const stepsStr = steps.join('\n');
+    return `name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: \${{ github.workflow }}-\${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+${stepsStr}
+`;
+}
 async function scaffold(choices) {
-    const { projectName, packageManager, shadcnBaseColor, includeConvex, includeRhfZod } = choices;
+    const { projectName, packageManager, shadcnBaseColor, includeConvex, includeVitest, includeRhfZod } = choices;
     const cwd = process.cwd();
     const projectDir = path.join(cwd, projectName);
     // ─── Pre-flight check ────────────────────────────────────────────────────
@@ -133,6 +205,7 @@ async function scaffold(choices) {
     (0, utils_1.runCommand)(`npx shadcn@latest add ${SHADCN_COMPONENTS.join(' ')} --yes`, projectDir);
     s.stop(`${SHADCN_COMPONENTS.length} shadcn/ui components added ✓`);
     // ─── Step 7: Convex setup ─────────────────────────────────────────────────
+    const vitestScripts = includeVitest ? { test: 'vitest run', 'test:watch': 'vitest' } : {};
     if (includeConvex) {
         s.start('Setting up Convex…');
         (0, utils_1.runCommand)((0, utils_1.getInstallCommand)(packageManager, ['convex']), projectDir);
@@ -154,6 +227,8 @@ async function scaffold(choices) {
             build: 'next build',
             start: 'next start',
             lint: 'eslint .',
+            typecheck: 'tsc --noEmit',
+            ...vitestScripts,
         };
         (0, utils_1.writeFile)(pkgJsonPath, JSON.stringify(pkgJson, null, 2) + '\n');
         s.stop('Convex setup complete ✓');
@@ -168,6 +243,8 @@ async function scaffold(choices) {
             build: 'next build',
             start: 'next start',
             lint: 'eslint .',
+            typecheck: 'tsc --noEmit',
+            ...vitestScripts,
         };
         (0, utils_1.writeFile)(pkgJsonPath, JSON.stringify(pkgJson, null, 2) + '\n');
     }
@@ -177,10 +254,26 @@ async function scaffold(choices) {
         (0, utils_1.runCommand)((0, utils_1.getInstallCommand)(packageManager, ['react-hook-form', '@hookform/resolvers', 'zod']), projectDir);
         s.stop('React Hook Form + Zod installed ✓');
     }
+    // ─── Step 9: Vitest setup ─────────────────────────────────────────────────
+    if (includeVitest) {
+        s.start('Setting up Vitest…');
+        (0, utils_1.runCommand)((0, utils_1.getInstallCommand)(packageManager, ['vitest', '@vitejs/plugin-react', '@testing-library/react', '@testing-library/jest-dom', 'jsdom'], true), projectDir);
+        (0, utils_1.writeFile)(path.join(projectDir, 'vitest.config.ts'), (0, utils_1.readTemplate)('vitest.config.ts.template'));
+        (0, utils_1.writeFile)(path.join(projectDir, 'vitest.setup.ts'), (0, utils_1.readTemplate)('vitest.setup.ts.template'));
+        s.stop('Vitest setup complete ✓');
+    }
+    // ─── Step 10: GitHub Actions CI workflow ──────────────────────────────────
+    s.start('Writing GitHub Actions CI workflow…');
+    (0, utils_1.writeFile)(path.join(projectDir, '.github', 'workflows', 'ci.yml'), buildCiWorkflow(packageManager, includeVitest));
+    s.stop('GitHub Actions CI workflow written ✓');
 }
 function printSummary(choices) {
-    const { projectName, packageManager, shadcnBaseColor, includeConvex, includeRhfZod } = choices;
+    const { projectName, packageManager, shadcnBaseColor, includeConvex, includeVitest, includeRhfZod } = choices;
     const devCmd = packageManager === 'npm' ? 'npm run dev' : packageManager === 'pnpm' ? 'pnpm dev' : 'bun dev';
+    const ciSteps = ['lint', 'typecheck', ...(includeVitest ? ['test'] : []), 'build'].join(', ');
+    const convexRow = includeConvex ? '\n  ├─ Convex (real-time backend) ✅' : '';
+    const vitestRow = includeVitest ? '\n  ├─ Vitest (unit testing) ✅' : '';
+    const rhfZodRow = includeRhfZod ? '\n  └─ React Hook Form + Zod (forms) ✅' : '';
     console.log(`
 ✅ create-ncs-app — Project ready!
 
@@ -188,7 +281,8 @@ function printSummary(choices) {
   ├─ Next.js (App Router) + TypeScript + Tailwind v4
   ├─ shadcn/ui (new-york, ${shadcnBaseColor}) — ${SHADCN_COMPONENTS.length} components added
   ├─ next-themes (dark mode ready)
-  ├─ lucide-react (icons)${includeConvex ? '\n  ├─ Convex (real-time backend) ✅' : ''}${includeRhfZod ? '\n  └─ React Hook Form + Zod (forms) ✅' : ''}
+  ├─ lucide-react (icons)
+  ├─ GitHub Actions CI (${ciSteps}) ✅${convexRow}${vitestRow}${rhfZodRow}
 
   To get started:
     cd ${projectName}
