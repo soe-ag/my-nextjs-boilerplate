@@ -66,7 +66,18 @@ async function runPrompts(projectNameArg) {
         process.exit(0);
     }
     const includeConvex = convexResult;
-    // 5. Include React Hook Form + Zod?
+    // 5. Include Vitest?
+    (0, prompts_1.note)('Vitest is a fast Vite-native unit testing framework.\nAdds vitest, @vitejs/plugin-react, @testing-library/react, @testing-library/jest-dom, and jsdom.\nIncludes a vitest.config.ts and vitest.setup.ts to get you started immediately.');
+    const vitestResult = await (0, prompts_1.confirm)({
+        message: 'Include Vitest (unit testing)?',
+        initialValue: false,
+    });
+    if ((0, prompts_1.isCancel)(vitestResult)) {
+        (0, prompts_1.cancel)('Operation cancelled.');
+        process.exit(0);
+    }
+    const includeVitest = vitestResult;
+    // 6. Include React Hook Form + Zod?
     (0, prompts_1.note)('react-hook-form handles form state and submission with minimal re-renders.\nzod provides TypeScript-first schema validation.\n@hookform/resolvers connects them together.\nRecommended if your app has any forms.');
     const rhfResult = await (0, prompts_1.confirm)({
         message: 'Include React Hook Form + Zod (form handling + validation)?',
@@ -82,6 +93,7 @@ async function runPrompts(projectNameArg) {
         packageManager,
         shadcnBaseColor,
         includeConvex,
+        includeVitest,
         includeRhfZod,
     };
 }

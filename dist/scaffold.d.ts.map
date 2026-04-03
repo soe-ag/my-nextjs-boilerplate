@@ -1,1 +1,1 @@
-{"version":3,"file":"scaffold.d.ts","sourceRoot":"","sources":["../src/scaffold.ts"],"names":[],"mappings":"AAGA,OAAO,EAAE,WAAW,EAAE,MAAM,WAAW,CAAA;AAqBvC,wBAAsB,QAAQ,CAAC,OAAO,EAAE,WAAW,GAAG,OAAO,CAAC,IAAI,CAAC,CA8JlE;AAED,wBAAgB,YAAY,CAAC,OAAO,EAAE,WAAW,GAAG,IAAI,CA2BvD"}
+{"version":3,"file":"scaffold.d.ts","sourceRoot":"","sources":["../src/scaffold.ts"],"names":[],"mappings":"AAGA,OAAO,EAAE,WAAW,EAAE,MAAM,WAAW,CAAA;AAoGvC,wBAAsB,QAAQ,CAAC,OAAO,EAAE,WAAW,GAAG,OAAO,CAAC,IAAI,CAAC,CA2LlE;AAED,wBAAgB,YAAY,CAAC,OAAO,EAAE,WAAW,GAAG,IAAI,CA4BvD"}

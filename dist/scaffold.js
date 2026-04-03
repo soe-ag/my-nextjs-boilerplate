@@ -56,8 +56,80 @@ const SHADCN_COMPONENTS = [
     'skeleton',
     'tabs',
 ];
+function buildCiWorkflow(packageManager, includeVitest) {
+    let setupSteps;
+    let installCmd;
+    let runPrefix;
+    switch (packageManager) {
+        case 'pnpm':
+            setupSteps = [
+                '      - uses: pnpm/action-setup@v4',
+                '        with:',
+                '          version: 9',
+                '      - uses: actions/setup-node@v4',
+                '        with:',
+                '          node-version: 20',
+                "          cache: 'pnpm'",
+            ].join('\n');
+            installCmd = 'pnpm install --frozen-lockfile';
+            runPrefix = 'pnpm';
+            break;
+        case 'bun':
+            setupSteps = [
+                '      - uses: oven-sh/setup-bun@v2',
+                '        with:',
+                '          bun-version: latest',
+            ].join('\n');
+            installCmd = 'bun install --frozen-lockfile';
+            runPrefix = 'bun run';
+            break;
+        case 'npm':
+        default:
+            setupSteps = [
+                '      - uses: actions/setup-node@v4',
+                '        with:',
+                '          node-version: 20',
+                "          cache: 'npm'",
+            ].join('\n');
+            installCmd = 'npm ci';
+            runPrefix = 'npm run';
+            break;
+    }
+    const steps = [
+        '      - uses: actions/checkout@v4',
+        setupSteps,
+        `      - name: Install dependencies`,
+        `        run: ${installCmd}`,
+        `      - name: Lint`,
+        `        run: ${runPrefix} lint`,
+        `      - name: Type check`,
+        `        run: ${runPrefix} typecheck`,
+    ];
+    if (includeVitest) {
+        steps.push(`      - name: Test`, `        run: ${runPrefix} test`);
+    }
+    steps.push(`      - name: Build`, `        run: ${runPrefix} build`);
+    const stepsStr = steps.join('\n');
+    return `name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: \${{ github.workflow }}-\${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+${stepsStr}
+`;
+}
 async function scaffold(choices) {
-    const { projectName, packageManager, shadcnBaseColor, includeConvex, includeRhfZod } = choices;
+    const { projectName, packageManager, shadcnBaseColor, includeConvex, includeVitest, includeRhfZod } = choices;
     const cwd = process.cwd();
     const projectDir = path.join(cwd, projectName);
     // ─── Pre-flight check ────────────────────────────────────────────────────
@@ -133,6 +205,7 @@ async function scaffold(choices) {
     (0, utils_1.runCommand)(`npx shadcn@latest add ${SHADCN_COMPONENTS.join(' ')} --yes`, projectDir);
     s.stop(`${SHADCN_COMPONENTS.length} shadcn/ui components added ✓`);
     // ─── Step 7: Convex setup ─────────────────────────────────────────────────
+    const vitestScripts = includeVitest ? { test: 'vitest run', 'test:watch': 'vitest' } : {};
     if (includeConvex) {
         s.start('Setting up Convex…');
         (0, utils_1.runCommand)((0, utils_1.getInstallCommand)(packageManager, ['convex']), projectDir);
@@ -154,6 +227,8 @@ async function scaffold(choices) {
             build: 'next build',
             start: 'next start',
             lint: 'eslint .',
+            typecheck: 'tsc --noEmit',
+            ...vitestScripts,
         };
         (0, utils_1.writeFile)(pkgJsonPath, JSON.stringify(pkgJson, null, 2) + '\n');
         s.stop('Convex setup complete ✓');
@@ -168,6 +243,8 @@ async function scaffold(choices) {
             build: 'next build',
             start: 'next start',
             lint: 'eslint .',
+            typecheck: 'tsc --noEmit',
+            ...vitestScripts,
         };
         (0, utils_1.writeFile)(pkgJsonPath, JSON.stringify(pkgJson, null, 2) + '\n');
     }
@@ -177,9 +254,21 @@ async function scaffold(choices) {
         (0, utils_1.runCommand)((0, utils_1.getInstallCommand)(packageManager, ['react-hook-form', '@hookform/resolvers', 'zod']), projectDir);
         s.stop('React Hook Form + Zod installed ✓');
     }
+    // ─── Step 9: Vitest setup ─────────────────────────────────────────────────
+    if (includeVitest) {
+        s.start('Setting up Vitest…');
+        (0, utils_1.runCommand)((0, utils_1.getInstallCommand)(packageManager, ['vitest', '@vitejs/plugin-react', '@testing-library/react', '@testing-library/jest-dom', 'jsdom'], true), projectDir);
+        (0, utils_1.writeFile)(path.join(projectDir, 'vitest.config.ts'), (0, utils_1.readTemplate)('vitest.config.ts.template'));
+        (0, utils_1.writeFile)(path.join(projectDir, 'vitest.setup.ts'), (0, utils_1.readTemplate)('vitest.setup.ts.template'));
+        s.stop('Vitest setup complete ✓');
+    }
+    // ─── Step 10: GitHub Actions CI workflow ──────────────────────────────────
+    s.start('Writing GitHub Actions CI workflow…');
+    (0, utils_1.writeFile)(path.join(projectDir, '.github', 'workflows', 'ci.yml'), buildCiWorkflow(packageManager, includeVitest));
+    s.stop('GitHub Actions CI workflow written ✓');
 }
 function printSummary(choices) {
-    const { projectName, packageManager, shadcnBaseColor, includeConvex, includeRhfZod } = choices;
+    const { projectName, packageManager, shadcnBaseColor, includeConvex, includeVitest, includeRhfZod } = choices;
     const devCmd = packageManager === 'npm' ? 'npm run dev' : packageManager === 'pnpm' ? 'pnpm dev' : 'bun dev';
     console.log(`
 ✅ create-ncs-app — Project ready!
@@ -188,7 +277,8 @@ function printSummary(choices) {
   ├─ Next.js (App Router) + TypeScript + Tailwind v4
   ├─ shadcn/ui (new-york, ${shadcnBaseColor}) — ${SHADCN_COMPONENTS.length} components added
   ├─ next-themes (dark mode ready)
-  ├─ lucide-react (icons)${includeConvex ? '\n  ├─ Convex (real-time backend) ✅' : ''}${includeRhfZod ? '\n  └─ React Hook Form + Zod (forms) ✅' : ''}
+  ├─ lucide-react (icons)
+  ├─ GitHub Actions CI (lint, typecheck${includeVitest ? ', test' : ''}, build) ✅${includeConvex ? '\n  ├─ Convex (real-time backend) ✅' : ''}${includeVitest ? '\n  ├─ Vitest (unit testing) ✅' : ''}${includeRhfZod ? '\n  └─ React Hook Form + Zod (forms) ✅' : ''}
 
   To get started:
     cd ${projectName}
