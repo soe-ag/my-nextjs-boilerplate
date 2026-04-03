@@ -63,10 +63,10 @@ function buildCiWorkflow(packageManager, includeVitest) {
     switch (packageManager) {
         case 'pnpm':
             setupSteps = [
-                '      - uses: pnpm/action-setup@v4',
+                '      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4',
                 '        with:',
                 '          version: 9',
-                '      - uses: actions/setup-node@v4',
+                '      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4',
                 '        with:',
                 '          node-version: 20',
                 "          cache: 'pnpm'",
@@ -76,7 +76,7 @@ function buildCiWorkflow(packageManager, includeVitest) {
             break;
         case 'bun':
             setupSteps = [
-                '      - uses: oven-sh/setup-bun@v2',
+                '      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2',
                 '        with:',
                 '          bun-version: latest',
             ].join('\n');
@@ -86,7 +86,7 @@ function buildCiWorkflow(packageManager, includeVitest) {
         case 'npm':
         default:
             setupSteps = [
-                '      - uses: actions/setup-node@v4',
+                '      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4',
                 '        with:',
                 '          node-version: 20',
                 "          cache: 'npm'",
@@ -96,7 +96,7 @@ function buildCiWorkflow(packageManager, includeVitest) {
             break;
     }
     const steps = [
-        '      - uses: actions/checkout@v4',
+        '      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4',
         setupSteps,
         `      - name: Install dependencies`,
         `        run: ${installCmd}`,
@@ -270,6 +270,10 @@ async function scaffold(choices) {
 function printSummary(choices) {
     const { projectName, packageManager, shadcnBaseColor, includeConvex, includeVitest, includeRhfZod } = choices;
     const devCmd = packageManager === 'npm' ? 'npm run dev' : packageManager === 'pnpm' ? 'pnpm dev' : 'bun dev';
+    const ciSteps = ['lint', 'typecheck', ...(includeVitest ? ['test'] : []), 'build'].join(', ');
+    const convexRow = includeConvex ? '\n  ├─ Convex (real-time backend) ✅' : '';
+    const vitestRow = includeVitest ? '\n  ├─ Vitest (unit testing) ✅' : '';
+    const rhfZodRow = includeRhfZod ? '\n  └─ React Hook Form + Zod (forms) ✅' : '';
     console.log(`
 ✅ create-ncs-app — Project ready!
 
@@ -278,7 +282,7 @@ function printSummary(choices) {
   ├─ shadcn/ui (new-york, ${shadcnBaseColor}) — ${SHADCN_COMPONENTS.length} components added
   ├─ next-themes (dark mode ready)
   ├─ lucide-react (icons)
-  ├─ GitHub Actions CI (lint, typecheck${includeVitest ? ', test' : ''}, build) ✅${includeConvex ? '\n  ├─ Convex (real-time backend) ✅' : ''}${includeVitest ? '\n  ├─ Vitest (unit testing) ✅' : ''}${includeRhfZod ? '\n  └─ React Hook Form + Zod (forms) ✅' : ''}
+  ├─ GitHub Actions CI (${ciSteps}) ✅${convexRow}${vitestRow}${rhfZodRow}
 
   To get started:
     cd ${projectName}
