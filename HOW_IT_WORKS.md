@@ -12,7 +12,7 @@ npx create-ncs-app my-app
 
 This single command does the following in order:
 
-1. Asks you five questions
+1. Asks you six questions
 2. Runs `create-next-app` to bootstrap Next.js
 3. Installs and wires up all core dependencies
 4. Writes config files
@@ -25,15 +25,16 @@ This single command does the following in order:
 
 ### Step 1 — Collect choices (`src/prompts.ts`)
 
-The CLI uses [`@clack/prompts`](https://github.com/bombshell-dev/clack) to ask five interactive questions:
+The CLI uses [`@clack/prompts`](https://github.com/bombshell-dev/clack) to ask six interactive questions:
 
-| # | Question | Feeds into |
-|---|----------|------------|
-| 1 | Project name | folder name + `package.json` name |
-| 2 | Package manager (`npm` / `pnpm` / `bun`) | every install command |
-| 3 | shadcn base color | `components.json` → UI palette |
-| 4 | Include Convex? | optional backend setup |
-| 5 | Include React Hook Form + Zod? | optional form setup |
+| #   | Question                                 | Feeds into                        |
+| --- | ---------------------------------------- | --------------------------------- |
+| 1   | Project name                             | folder name + `package.json` name |
+| 2   | Package manager (`npm` / `pnpm` / `bun`) | every install command             |
+| 3   | shadcn base color                        | `components.json` → UI palette    |
+| 4   | Include Convex?                          | optional backend setup            |
+| 5   | Include Vitest?                          | optional testing setup            |
+| 6   | Include React Hook Form + Zod?           | optional form setup               |
 
 All answers are collected into a single `UserChoices` object and passed straight into the scaffold function.
 
@@ -41,11 +42,10 @@ All answers are collected into a single `UserChoices` object and passed straight
 
 ### Step 2 — Bootstrap Next.js (`src/scaffold.ts`)
 
-```ts
-npx create-next-app@latest <name> --typescript --tailwind --eslint --app --no-src-dir --no-import-alias --turbopack
-```
+The CLI runs `create-next-app` with your selected package manager (`npx` / `pnpm dlx` / `bunx`) and passes `--use-npm` / `--use-pnpm` / `--use-bun` accordingly.
 
 This gives you a clean Next.js project with:
+
 - App Router
 - TypeScript
 - ESLint
@@ -57,26 +57,25 @@ Everything else is layered on top.
 
 ### Step 3 — Install core dependencies
 
-Packages are split into two groups and installed with the package manager you chose:
+Packages are split into two groups and installed with the package manager you chose, in a single runtime install and a single dev install pass:
 
 **Runtime deps (`npm install <pkg>`):**
 
-| Package | Role |
-|---------|------|
-| `next-themes` | dark / light mode toggling |
-| `lucide-react` | icon set |
-| `clsx` | conditional class name joining |
-| `tailwind-merge` | removes conflicting Tailwind classes |
-| `class-variance-authority` | typed component variants |
+| Package                    | Role                                 |
+| -------------------------- | ------------------------------------ |
+| `next-themes`              | dark / light mode toggling           |
+| `lucide-react`             | icon set                             |
+| `clsx`                     | conditional class name joining       |
+| `tailwind-merge`           | removes conflicting Tailwind classes |
+| `class-variance-authority` | typed component variants             |
 
 **Dev deps (`npm install -D <pkg>`):**
 
-| Package | Role |
-|---------|------|
-| `tailwindcss@^4` + `@tailwindcss/postcss@^4` | Tailwind v4 engine |
-| `tw-animate-css` | animation utilities |
-| `prettier` | code formatter |
-| `shadcn@latest` | shadcn CLI (used in next steps) |
+| Package                                      | Role                |
+| -------------------------------------------- | ------------------- |
+| `tailwindcss@^4` + `@tailwindcss/postcss@^4` | Tailwind v4 engine  |
+| `tw-animate-css`                             | animation utilities |
+| `prettier`                                   | code formatter      |
 
 ---
 
@@ -93,9 +92,7 @@ These are read with `readTemplate()`, which resolves paths relative to the CLI's
 
 ### Step 5 — Initialise shadcn/ui
 
-```bash
-npx shadcn@latest init --yes
-```
+The CLI runs shadcn with your selected package manager (`npx shadcn@latest ...`, `pnpm dlx shadcn@latest ...`, or `bunx shadcn@latest ...`).
 
 This writes `components.json` and sets up the `components/ui/` directory.
 
@@ -119,11 +116,11 @@ Immediately after, the CLI **patches `components.json`** to apply your chosen se
 Then `lib/utils.ts` is written from a template — this is the `cn()` helper:
 
 ```ts
-import { clsx, type ClassValue } from 'clsx'
-import { twMerge } from 'tailwind-merge'
+import { clsx, type ClassValue } from "clsx";
+import { twMerge } from "tailwind-merge";
 
 export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs))
+  return twMerge(clsx(inputs));
 }
 ```
 
@@ -133,10 +130,7 @@ export function cn(...inputs: ClassValue[]) {
 
 ### Step 6 — Add shadcn/ui components
 
-```bash
-npx shadcn@latest add button card dialog input label select dropdown-menu \
-  sonner chart form separator badge avatar skeleton tabs --yes
-```
+The same package-manager-specific command is used to add all 15 components in one run.
 
 15 components are added into `components/ui/`. Each component uses `cn()` + `class-variance-authority` internally, so they all share the same utility chain.
 
@@ -149,7 +143,8 @@ When you choose **Yes** for Convex:
 1. `convex` is installed as a runtime dep
 2. `npm-run-all2` is installed as a dev dep (runs scripts in parallel)
 3. `convex/schema.ts` and `convex/tsconfig.json` are written from templates
-4. `package.json` scripts are updated:
+4. If the package manager is **pnpm**, an `.npmrc` is created with `enable-pre-post-scripts=true` (pnpm v8 disables pre/post lifecycle scripts by default; without this, `predev` won't run)
+5. `package.json` scripts are updated:
 
 ```json
 {
@@ -161,8 +156,10 @@ When you choose **Yes** for Convex:
 ```
 
 **How this makes one command work:**
+
 - `npm run dev` triggers `predev` first, which ensures Convex is connected to a deployment before anything starts.
 - Then `npm-run-all` starts `next dev` and `convex dev` in parallel, so both the frontend and backend hot-reload together.
+- For initial Convex linking, use the package-manager-specific command: `npx convex dev` (npm), `pnpm dlx convex dev` (pnpm), or `bunx convex dev` (bun).
 
 ---
 
@@ -224,7 +221,7 @@ src/
 ├── index.ts      — entry point: runs prompts → scaffold → print summary
 ├── prompts.ts    — collects UserChoices via @clack/prompts
 ├── scaffold.ts   — executes all setup steps in order
-└── utils.ts      — runCommand, writeFile, readTemplate, getInstallCommand
+└── utils.ts      — runCommand, writeFile, readTemplate, getInstallCommand, getDlxCommand, getCreateNextAppCommand, assertPackageManagerAvailable
 
 templates/
 ├── postcss.config.mjs.template

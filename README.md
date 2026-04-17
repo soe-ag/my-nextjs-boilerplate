@@ -35,34 +35,34 @@ Or just run it without arguments and follow the interactive prompts:
 npx create-ncs-app
 ```
 
-You'll be guided through five prompts:
+You'll be guided through six prompts:
 
-| # | Prompt | Options |
-|---|--------|---------|
-| 1 | Project name | any valid folder name (default: `my-app`) |
-| 2 | Package manager | `npm` \| `pnpm` \| `bun` |
-| 3 | shadcn base color | `slate` \| `zinc` \| `gray` \| `neutral` \| `stone` |
-| 4 | Include Convex? | Yes / No |
-| 5 | Include React Hook Form + Zod? | Yes / No |
+| #   | Prompt                         | Options                                             |
+| --- | ------------------------------ | --------------------------------------------------- |
+| 1   | Project name                   | any valid folder name (default: `my-app`)           |
+| 2   | Package manager                | `npm` \| `pnpm` \| `bun`                            |
+| 3   | shadcn base color              | `slate` \| `zinc` \| `gray` \| `neutral` \| `stone` |
+| 4   | Include Convex?                | Yes / No                                            |
+| 5   | Include Vitest?                | Yes / No                                            |
+| 6   | Include React Hook Form + Zod? | Yes / No                                            |
 
 ---
 
 ## What's Always Included
 
-| Package | Purpose |
-|---------|---------|
-| `next@latest` | React framework (App Router) |
-| `react` / `react-dom` | React runtime |
-| `typescript` | Type-safe JavaScript |
-| `tailwindcss@^4` + `@tailwindcss/postcss@^4` | Utility-first CSS |
-| `tw-animate-css` | Tailwind animation utilities |
-| `next-themes` | Dark mode support |
-| `lucide-react` | Icon library |
-| `clsx` + `tailwind-merge` | Conditional class merging (`cn` utility) |
-| `class-variance-authority` | Component variant management |
-| `prettier` | Opinionated code formatter |
-| `shadcn@latest` | shadcn/ui CLI |
-| `eslint` + `eslint-config-next` | Linting |
+| Package                                      | Purpose                                  |
+| -------------------------------------------- | ---------------------------------------- |
+| `next@latest`                                | React framework (App Router)             |
+| `react` / `react-dom`                        | React runtime                            |
+| `typescript`                                 | Type-safe JavaScript                     |
+| `tailwindcss@^4` + `@tailwindcss/postcss@^4` | Utility-first CSS                        |
+| `tw-animate-css`                             | Tailwind animation utilities             |
+| `next-themes`                                | Dark mode support                        |
+| `lucide-react`                               | Icon library                             |
+| `clsx` + `tailwind-merge`                    | Conditional class merging (`cn` utility) |
+| `class-variance-authority`                   | Component variant management             |
+| `prettier`                                   | Opinionated code formatter               |
+| `eslint` + `eslint-config-next`              | Linting                                  |
 
 ### Config files written
 
@@ -77,23 +77,23 @@ You'll be guided through five prompts:
 
 All 15 components are added automatically — no prompts:
 
-| Component | Category |
-|-----------|---------|
-| `button` | Core UI primitive |
-| `card` | Core UI primitive |
-| `dialog` | Core UI primitive |
-| `input` | Core UI primitive |
-| `label` | Core UI primitive |
-| `select` | Core UI primitive |
-| `dropdown-menu` | Core UI primitive |
-| `sonner` | Toast notifications |
-| `chart` | Chart components (wraps recharts) |
-| `form` | Form wrapper for react-hook-form |
-| `separator` | Layout / display |
-| `badge` | Layout / display |
-| `avatar` | Layout / display |
-| `skeleton` | Loading state |
-| `tabs` | Navigation |
+| Component       | Category                          |
+| --------------- | --------------------------------- |
+| `button`        | Core UI primitive                 |
+| `card`          | Core UI primitive                 |
+| `dialog`        | Core UI primitive                 |
+| `input`         | Core UI primitive                 |
+| `label`         | Core UI primitive                 |
+| `select`        | Core UI primitive                 |
+| `dropdown-menu` | Core UI primitive                 |
+| `sonner`        | Toast notifications               |
+| `chart`         | Chart components (wraps recharts) |
+| `form`          | Form wrapper for react-hook-form  |
+| `separator`     | Layout / display                  |
+| `badge`         | Layout / display                  |
+| `avatar`        | Layout / display                  |
+| `skeleton`      | Loading state                     |
+| `tabs`          | Navigation                        |
 
 ---
 
@@ -137,7 +137,12 @@ npm run dev   # or: pnpm dev / bun dev
 
 ### If you selected Convex
 
-1. Run `npx convex dev` to link your project to a Convex deployment.
+1. Run the command matching your package manager to link your project to a Convex deployment:
+
+- npm: `npx convex dev`
+- pnpm: `pnpm dlx convex dev`
+- bun: `bunx convex dev`
+
 2. Create a free account at [https://convex.dev](https://convex.dev) if you don't have one.
 3. The `predev` script will automatically run `convex dev --until-success` before starting the frontend.
 
