@@ -257,5 +257,5 @@ bin/
 The execution workflow consumes these two modules. This concentrates change and makes tests able to verify the plan and command policy without creating a real Next.js project.
 ## Requirements
 
-- Node.js >= 18
+- Node.js >= 20.12.0
 - One of: `npm` or `pnpm`
