@@ -43,26 +43,12 @@ exports.getCreateNextAppCommand = getCreateNextAppCommand;
 const child_process_1 = require("child_process");
 const fs = __importStar(require("fs"));
 const path = __importStar(require("path"));
-const PM_INSTALL_HELP = {
-    npm: "https://docs.npmjs.com/downloading-and-installing-node-js-and-npm",
-    pnpm: "https://pnpm.io/installation",
-};
-/**
- * Build the package-manager-specific command for one-off package execution.
- */
+const package_manager_1 = require("./package-manager");
+/** Build the package-manager-specific command for one-off package execution. */
 function getDlxCommand(pm) {
-    switch (pm) {
-        case "pnpm":
-            return "pnpm dlx";
-        case "npm":
-        default:
-            return "npx";
-    }
+    return (0, package_manager_1.getPackageManagerPolicy)(pm).dlxCommand;
 }
-/**
- * Run a shell command synchronously, streaming output to the terminal.
- * Throws if the command exits with a non-zero code.
- */
+/** Run a shell command synchronously, streaming output to the terminal. */
 function runCommand(command, cwd) {
     try {
         (0, child_process_1.execSync)(command, {
@@ -76,26 +62,23 @@ function runCommand(command, cwd) {
         throw new Error(`Command failed: ${command}\n${err.stderr?.toString() ?? ""}`);
     }
 }
-/**
- * Ensure the selected package manager exists before running long scaffold steps.
- */
+/** Ensure the selected package manager exists before long scaffold steps. */
 function assertPackageManagerAvailable(pm) {
+    const policy = (0, package_manager_1.getPackageManagerPolicy)(pm);
     try {
-        (0, child_process_1.execSync)(`${pm} --version`, {
+        (0, child_process_1.execSync)(`${policy.name} --version`, {
             stdio: "ignore",
             shell: process.platform === "win32" ? "cmd.exe" : "/bin/sh",
         });
     }
     catch {
         throw new Error([
-            `Selected package manager \"${pm}\" is not installed or not available in PATH.`,
-            `Install it first: ${PM_INSTALL_HELP[pm]}`,
+            `Selected package manager \"${policy.name}\" is not installed or not available in PATH.`,
+            `Install it first: ${policy.installHelpUrl}`,
         ].join("\n"));
     }
 }
-/**
- * Write content to a file, creating parent directories as needed.
- */
+/** Write content to a file, creating parent directories as needed. */
 function writeFile(filePath, content) {
     const dir = path.dirname(filePath);
     if (!fs.existsSync(dir)) {
@@ -103,34 +86,20 @@ function writeFile(filePath, content) {
     }
     fs.writeFileSync(filePath, content, "utf8");
 }
-/**
- * Read a template file from the templates directory.
- */
+/** Read a template file from the templates directory. */
 function readTemplate(templateRelPath) {
     const templatePath = path.join(__dirname, "..", "templates", templateRelPath);
     return fs.readFileSync(templatePath, "utf8");
 }
-/**
- * Build the install command for the given package manager.
- */
+/** Build the install command for the selected package manager. */
 function getInstallCommand(pm, packages, dev = false) {
-    const pkgList = packages.join(" ");
-    switch (pm) {
-        case "pnpm":
-            return `pnpm add ${dev ? "-D " : ""}${pkgList}`;
-        case "npm":
-        default:
-            return `npm install ${dev ? "--save-dev " : ""}${pkgList}`;
-    }
+    return (0, package_manager_1.getPackageManagerPolicy)(pm).installCommand(packages, dev);
 }
-/**
- * Build the create-next-app command using the user's selected package manager.
- */
+/** Build the create-next-app command using the selected package manager. */
 function getCreateNextAppCommand(pm, projectName) {
-    const dlx = getDlxCommand(pm);
-    const useFlag = pm === "npm" ? "--use-npm" : "--use-pnpm";
+    const policy = (0, package_manager_1.getPackageManagerPolicy)(pm);
     return [
-        `${dlx} create-next-app@latest ${projectName}`,
+        `${policy.dlxCommand} create-next-app@latest ${projectName}`,
         "--typescript",
         "--tailwind",
         "--eslint",
@@ -138,7 +107,7 @@ function getCreateNextAppCommand(pm, projectName) {
         "--no-src-dir",
         "--no-import-alias",
         "--turbopack",
-        useFlag,
+        policy.createNextAppFlag,
         "--yes",
     ].join(" ");
 }

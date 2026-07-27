@@ -170,6 +170,11 @@ my-app/
 
 ---
 
+## How the CLI is organized
+
+The CLI first builds a scaffold plan from your choices. That plan decides the dependencies, scripts, and optional features before any commands run. The execution step then applies the plan to the new project.
+
+Package-manager differences are kept in one policy adapter. npm and pnpm each provide their own install command, one-off command, create-next-app flag, CI setup, and development commands, while the scaffold workflow only asks the policy for the command it needs.
 ## Requirements
 
 - Node.js >= 18

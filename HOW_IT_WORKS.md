@@ -13,11 +13,12 @@ npx create-ncs-app my-app
 This single command does the following in order:
 
 1. Asks you six questions
-2. Runs `create-next-app` to bootstrap Next.js
-3. Installs and wires up all core dependencies
-4. Writes config files
-5. Initialises and configures shadcn/ui
-6. Optionally sets up Convex and/or React Hook Form + Zod
+2. Composes a scaffold plan from your choices
+3. Runs `create-next-app` to bootstrap Next.js
+4. Installs and wires up all core dependencies
+5. Writes config files
+6. Initialises and configures shadcn/ui
+7. Optionally sets up Convex and/or React Hook Form + Zod
 
 ---
 
@@ -36,13 +37,20 @@ The CLI uses [`@clack/prompts`](https://github.com/bombshell-dev/clack) to ask s
 | 5   | Include Vitest?                          | optional testing setup            |
 | 6   | Include React Hook Form + Zod?           | optional form setup               |
 
-All answers are collected into a single `UserChoices` object and passed straight into the scaffold function.
+All answers are collected into a single `UserChoices` object, then converted into a `ScaffoldPlan` before the scaffold workflow runs.
 
 ---
 
-### Step 2 — Bootstrap Next.js (`src/scaffold.ts`)
+### Step 2 — Compose the scaffold plan (`src/scaffold.ts`)
 
-The CLI runs `create-next-app` with your selected package manager (`npx` / `pnpm dlx`) and passes `--use-npm` / `--use-pnpm` accordingly.
+
+
+
+The CLI turns the collected choices into a `ScaffoldPlan` before running any external commands. The plan contains the project directory, selected package-manager policy, runtime dependencies, dev dependencies, and the final package scripts. This gives the workflow one place to test what the generated project should contain.
+
+### Step 3 — Bootstrap Next.js (`src/scaffold.ts`)
+
+The CLI asks `src/package-manager.ts` for the selected package-manager policy, then runs `create-next-app` with that policy (`npx` / `pnpm dlx`) and passes `--use-npm` / `--use-pnpm` accordingly.
 
 This gives you a clean Next.js project with:
 
@@ -55,7 +63,7 @@ Everything else is layered on top.
 
 ---
 
-### Step 3 — Install core dependencies
+### Step 4 — Install core dependencies
 
 Packages are split into two groups and installed with the package manager you chose, in a single runtime install and a single dev install pass:
 
@@ -79,7 +87,7 @@ Packages are split into two groups and installed with the package manager you ch
 
 ---
 
-### Step 4 — Write config files (`src/utils.ts → readTemplate`)
+### Step 5 — Write config files (`src/utils.ts → readTemplate`)
 
 Two files are copied from `templates/` into your project:
 
@@ -90,9 +98,9 @@ These are read with `readTemplate()`, which resolves paths relative to the CLI's
 
 ---
 
-### Step 5 — Initialise shadcn/ui
+### Step 6 — Initialise shadcn/ui
 
-The CLI runs shadcn with your selected package manager (`npx shadcn@latest ...` or `pnpm dlx shadcn@latest ...`).
+The CLI uses the same package-manager policy to run shadcn (`npx shadcn@latest ...` or `pnpm dlx shadcn@latest ...`).
 
 This writes `components.json` and sets up the `components/ui/` directory.
 
@@ -128,15 +136,15 @@ export function cn(...inputs: ClassValue[]) {
 
 ---
 
-### Step 6 — Add shadcn/ui components
+### Step 7 — Add shadcn/ui components
 
-The same package-manager-specific command is used to add all 15 components in one run.
+The same package-manager policy is used to add all 15 components in one run.
 
 15 components are added into `components/ui/`. Each component uses `cn()` + `class-variance-authority` internally, so they all share the same utility chain.
 
 ---
 
-### Step 7 (optional) — Convex setup
+### Step 8 (optional) — Convex setup
 
 When you choose **Yes** for Convex:
 
@@ -163,7 +171,7 @@ When you choose **Yes** for Convex:
 
 ---
 
-### Step 8 (optional) — React Hook Form + Zod
+### Step 9 (optional) — React Hook Form + Zod
 
 When you choose **Yes**:
 
@@ -182,7 +190,7 @@ zod schema  →  @hookform/resolvers  →  react-hook-form
 - **`@hookform/resolvers`** converts a zod schema into a format `react-hook-form` understands
 - **`react-hook-form`** manages field registration, dirty state, and submission
 
-The shadcn `form` component (added in Step 6) is a thin UI wrapper around this exact pattern.
+The shadcn `form` component (added in Step 7) is a thin UI wrapper around this exact pattern.
 
 ---
 
@@ -220,8 +228,9 @@ create-next-app (Next.js base)
 src/
 ├── index.ts      — entry point: runs prompts → scaffold → print summary
 ├── prompts.ts    — collects UserChoices via @clack/prompts
-├── scaffold.ts   — executes all setup steps in order
-└── utils.ts      — runCommand, writeFile, readTemplate, getInstallCommand, getDlxCommand, getCreateNextAppCommand, assertPackageManagerAvailable
+├── scaffold.ts   — composes the plan and executes setup steps in order
+├── utils.ts      — shared command execution, file, template, and command-building helpers
+└── package-manager.ts — npm/pnpm command policy adapters
 
 templates/
 ├── postcss.config.mjs.template
@@ -238,6 +247,14 @@ bin/
 
 ---
 
+
+### Architecture seams
+
+`createScaffoldPlan()` is the workflow’s planning seam. It is pure: given choices, it returns the generated project’s intended dependencies and scripts without touching the shell or filesystem.
+
+`getPackageManagerPolicy()` is the package-manager seam. The npm and pnpm adapters own all syntax differences, including installs, `npx`/`pnpm dlx`, create-next-app flags, CI commands, and pnpm’s lifecycle configuration.
+
+The execution workflow consumes these two modules. This concentrates change and makes tests able to verify the plan and command policy without creating a real Next.js project.
 ## Requirements
 
 - Node.js >= 18

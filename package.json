@@ -13,7 +13,8 @@
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
-    "prepare": "npm run build"
+    "prepare": "npm run build",
+    "test": "npm run build && node tests/architecture.test.js"
   },
   "dependencies": {
     "@clack/prompts": "^1.0.1"
@@ -25,6 +26,13 @@
   "engines": {
     "node": ">=18"
   },
-  "keywords": ["nextjs", "convex", "shadcn", "tailwind", "cli", "boilerplate"],
+  "keywords": [
+    "nextjs",
+    "convex",
+    "shadcn",
+    "tailwind",
+    "cli",
+    "boilerplate"
+  ],
   "license": "MIT"
 }

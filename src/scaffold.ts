@@ -9,9 +9,8 @@ import {
   readTemplate,
   getInstallCommand,
   getCreateNextAppCommand,
-  getDlxCommand,
-  PackageManager,
 } from "./utils";
+import { getPackageManagerPolicy, PackageManagerPolicy } from "./package-manager";
 
 const SHADCN_COMPONENTS = [
   "button",
@@ -32,58 +31,25 @@ const SHADCN_COMPONENTS = [
 ];
 
 function buildCiWorkflow(
-  packageManager: PackageManager,
+  policy: PackageManagerPolicy,
   includeVitest: boolean,
 ): string {
-  let setupSteps: string;
-  let installCmd: string;
-  let runPrefix: string;
-
-  switch (packageManager) {
-    case "pnpm":
-      setupSteps = [
-        "      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4.3.0",
-        "        with:",
-        "          version: 9",
-        "      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0",
-        "        with:",
-        "          node-version: 20",
-        "          cache: 'pnpm'",
-      ].join("\n");
-      installCmd = "pnpm install --frozen-lockfile";
-      runPrefix = "pnpm";
-      break;
-    case "npm":
-    default:
-      setupSteps = [
-        "      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0",
-        "        with:",
-        "          node-version: 20",
-        "          cache: 'npm'",
-      ].join("\n");
-      installCmd = "npm ci";
-      runPrefix = "npm run";
-      break;
-  }
-
   const steps = [
     "      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1",
-    setupSteps,
-    `      - name: Install dependencies`,
-    `        run: ${installCmd}`,
-    `      - name: Lint`,
-    `        run: ${runPrefix} lint`,
-    `      - name: Type check`,
-    `        run: ${runPrefix} typecheck`,
+    policy.ciSetupSteps,
+    "      - name: Install dependencies",
+    `        run: ${policy.ciInstallCommand}`,
+    "      - name: Lint",
+    `        run: ${policy.ciRunPrefix} lint`,
+    "      - name: Type check",
+    `        run: ${policy.ciRunPrefix} typecheck`,
   ];
 
   if (includeVitest) {
-    steps.push(`      - name: Test`, `        run: ${runPrefix} test`);
+    steps.push("      - name: Test", `        run: ${policy.ciRunPrefix} test`);
   }
 
-  steps.push(`      - name: Build`, `        run: ${runPrefix} build`);
-
-  const stepsStr = steps.join("\n");
+  steps.push("      - name: Build", `        run: ${policy.ciRunPrefix} build`);
 
   return `name: CI
 
@@ -100,11 +66,103 @@ jobs:
   ci:
     runs-on: ubuntu-latest
     steps:
-${stepsStr}
+${steps.join("\n")}
 `;
 }
+export interface ScaffoldPlan {
+  readonly choices: UserChoices;
+  readonly cwd: string;
+  readonly projectDir: string;
+  readonly packageManagerPolicy: PackageManagerPolicy;
+  readonly dependencies: string[];
+  readonly devDependencies: string[];
+  readonly projectScripts: Record<string, string>;
+}
 
+/**
+ * Compose all decisions that affect the generated project before any side effects occur.
+ * The returned plan is the scaffold workflow's main test surface.
+ */
+export function createScaffoldPlan(
+  choices: UserChoices,
+  cwd = process.cwd(),
+): ScaffoldPlan {
+  const dependencies = [
+    "next-themes",
+    "lucide-react",
+    "clsx",
+    "tailwind-merge",
+    "class-variance-authority",
+  ];
+  const devDependencies = [
+    "tailwindcss@^4",
+    "@tailwindcss/postcss@^4",
+    "tw-animate-css",
+    "prettier",
+  ];
+
+  if (choices.includeConvex) {
+    dependencies.push("convex");
+    devDependencies.push("npm-run-all2");
+  }
+
+  if (choices.includeRhfZod) {
+    dependencies.push("react-hook-form", "@hookform/resolvers", "zod");
+  }
+
+  if (choices.includeVitest) {
+    devDependencies.push(
+      "vitest",
+      "@vitejs/plugin-react",
+      "@testing-library/react",
+      "@testing-library/jest-dom",
+      "jsdom",
+    );
+  }
+
+  const vitestScripts: Record<string, string> = choices.includeVitest
+    ? { test: "vitest run", "test:watch": "vitest" }
+    : {};
+  const projectScripts: Record<string, string> = {
+    ...(choices.includeConvex
+      ? {
+          dev: "npm-run-all --parallel dev:frontend dev:backend",
+          "dev:frontend": "next dev",
+          "dev:backend": "convex dev",
+          predev: "convex dev --until-success",
+          build: "next build",
+          start: "next start",
+          lint: "eslint .",
+          typecheck: "tsc --noEmit",
+        }
+      : {
+          dev: "next dev",
+          build: "next build",
+          start: "next start",
+          lint: "eslint .",
+          typecheck: "tsc --noEmit",
+        }),
+    ...vitestScripts,
+  };
+  return {
+    choices,
+    cwd,
+    projectDir: path.join(cwd, choices.projectName),
+    packageManagerPolicy: getPackageManagerPolicy(choices.packageManager),
+    dependencies,
+    devDependencies,
+    projectScripts,
+  };
+}
 export async function scaffold(choices: UserChoices): Promise<void> {
+  const plan = createScaffoldPlan(choices);
+  const {
+    projectDir,
+    packageManagerPolicy,
+    dependencies,
+    devDependencies,
+    projectScripts,
+  } = plan;
   const {
     projectName,
     packageManager,
@@ -113,9 +171,8 @@ export async function scaffold(choices: UserChoices): Promise<void> {
     includeVitest,
     includeRhfZod,
   } = choices;
-  const cwd = process.cwd();
-  const projectDir = path.join(cwd, projectName);
-  const dlx = getDlxCommand(packageManager);
+  const { cwd } = plan;
+  const dlx = packageManagerPolicy.dlxCommand;
 
   // ─── Pre-flight check ────────────────────────────────────────────────────
   if (fs.existsSync(projectDir)) {
@@ -137,42 +194,8 @@ export async function scaffold(choices: UserChoices): Promise<void> {
   // create-next-app already installs next, react, react-dom, typescript, @types/*, eslint, eslint-config-next
   s.start("Installing dependencies…");
 
-  const deps: string[] = [
-    "next-themes",
-    "lucide-react",
-    "clsx",
-    "tailwind-merge",
-    "class-variance-authority",
-  ];
-
-  const devDeps: string[] = [
-    "tailwindcss@^4",
-    "@tailwindcss/postcss@^4",
-    "tw-animate-css",
-    "prettier",
-  ];
-
-  if (includeConvex) {
-    deps.push("convex");
-    devDeps.push("npm-run-all2");
-  }
-
-  if (includeRhfZod) {
-    deps.push("react-hook-form", "@hookform/resolvers", "zod");
-  }
-
-  if (includeVitest) {
-    devDeps.push(
-      "vitest",
-      "@vitejs/plugin-react",
-      "@testing-library/react",
-      "@testing-library/jest-dom",
-      "jsdom",
-    );
-  }
-
-  runCommand(getInstallCommand(packageManager, deps), projectDir);
-  runCommand(getInstallCommand(packageManager, devDeps, true), projectDir);
+  runCommand(getInstallCommand(packageManager, dependencies), projectDir);
+  runCommand(getInstallCommand(packageManager, devDependencies, true), projectDir);
   s.stop("Dependencies installed ✓");
 
   // ─── Step 3: Write non-shadcn config files ────────────────────────────────
@@ -244,25 +267,19 @@ export async function scaffold(choices: UserChoices): Promise<void> {
   s.stop(`${SHADCN_COMPONENTS.length} shadcn/ui components added ✓`);
 
   // ─── Step 7: Convex setup ─────────────────────────────────────────────────
-  const vitestScripts = includeVitest
-    ? { test: "vitest run", "test:watch": "vitest" }
-    : {};
   if (includeConvex) {
     s.start("Setting up Convex…");
 
     // pnpm v8 disables pre/post lifecycle scripts by default.
     // We need enable-pre-post-scripts so that "predev" runs before "dev".
-    if (packageManager === "pnpm") {
-      const npmrcPath = path.join(projectDir, ".npmrc");
-      const existing = fs.existsSync(npmrcPath)
-        ? fs.readFileSync(npmrcPath, "utf8")
+    if (packageManagerPolicy.lifecycleConfig) {
+      const config = packageManagerPolicy.lifecycleConfig;
+      const configPath = path.join(projectDir, config.fileName);
+      const existing = fs.existsSync(configPath)
+        ? fs.readFileSync(configPath, "utf8")
         : "";
-      if (!existing.includes("enable-pre-post-scripts")) {
-        writeFile(
-          npmrcPath,
-          (existing ? existing.trimEnd() + "\n" : "") +
-            "enable-pre-post-scripts=true\n",
-        );
+      if (!existing.includes(config.content.trim())) {
+        writeFile(configPath, existing + config.content);
       }
     }
 
@@ -278,40 +295,13 @@ export async function scaffold(choices: UserChoices): Promise<void> {
       readTemplate("convex/tsconfig.json.template"),
     );
 
-    // Update package.json scripts — merge to preserve any scripts added by create-next-app
-    const pkgJsonPath = path.join(projectDir, "package.json");
-    const pkgJson = JSON.parse(fs.readFileSync(pkgJsonPath, "utf8"));
-    pkgJson.scripts = {
-      ...pkgJson.scripts,
-      dev: "npm-run-all --parallel dev:frontend dev:backend",
-      "dev:frontend": "next dev",
-      "dev:backend": "convex dev",
-      predev: "convex dev --until-success",
-      build: "next build",
-      start: "next start",
-      lint: "eslint .",
-      typecheck: "tsc --noEmit",
-      ...vitestScripts,
-    };
-    writeFile(pkgJsonPath, JSON.stringify(pkgJson, null, 2) + "\n");
-
     s.stop("Convex setup complete ✓");
-  } else {
-    // Update package.json scripts — merge to preserve any scripts added by create-next-app
-    const pkgJsonPath = path.join(projectDir, "package.json");
-    const pkgJson = JSON.parse(fs.readFileSync(pkgJsonPath, "utf8"));
-    pkgJson.scripts = {
-      ...pkgJson.scripts,
-      dev: "next dev",
-      build: "next build",
-      start: "next start",
-      lint: "eslint .",
-      typecheck: "tsc --noEmit",
-      ...vitestScripts,
-    };
-    writeFile(pkgJsonPath, JSON.stringify(pkgJson, null, 2) + "\n");
   }
 
+  const pkgJsonPath = path.join(projectDir, "package.json");
+  const pkgJson = JSON.parse(fs.readFileSync(pkgJsonPath, "utf8"));
+  pkgJson.scripts = { ...pkgJson.scripts, ...projectScripts };
+  writeFile(pkgJsonPath, JSON.stringify(pkgJson, null, 2) + "\n");
   // ─── Step 8: React Hook Form + Zod setup ─────────────────────────────────
   if (includeRhfZod) {
     s.start("Configuring React Hook Form + Zod…");
@@ -336,7 +326,7 @@ export async function scaffold(choices: UserChoices): Promise<void> {
   s.start("Writing GitHub Actions CI workflow…");
   writeFile(
     path.join(projectDir, ".github", "workflows", "ci.yml"),
-    buildCiWorkflow(packageManager, includeVitest),
+    buildCiWorkflow(packageManagerPolicy, includeVitest),
   );
   s.stop("GitHub Actions CI workflow written ✓");
 }
@@ -344,18 +334,14 @@ export async function scaffold(choices: UserChoices): Promise<void> {
 export function printSummary(choices: UserChoices): void {
   const {
     projectName,
-    packageManager,
     shadcnBaseColor,
     includeConvex,
     includeVitest,
     includeRhfZod,
   } = choices;
-
-  const devCmd = packageManager === "npm" ? "npm run dev" : "pnpm dev";
-
-  const convexLinkCmd =
-    packageManager === "npm" ? "npx convex dev" : "pnpm dlx convex dev";
-
+  const packageManagerPolicy = getPackageManagerPolicy(choices.packageManager);
+  const devCmd = packageManagerPolicy.devCommand;
+  const convexLinkCmd = packageManagerPolicy.convexLinkCommand;
   const ciSteps = [
     "lint",
     "typecheck",
