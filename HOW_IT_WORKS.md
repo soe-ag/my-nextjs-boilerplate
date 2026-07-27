@@ -30,7 +30,7 @@ The CLI uses [`@clack/prompts`](https://github.com/bombshell-dev/clack) to ask s
 | #   | Question                                 | Feeds into                        |
 | --- | ---------------------------------------- | --------------------------------- |
 | 1   | Project name                             | folder name + `package.json` name |
-| 2   | Package manager (`npm` / `pnpm` / `bun`) | every install command             |
+| 2   | Package manager (`npm` / `pnpm`) | every install command             |
 | 3   | shadcn base color                        | `components.json` → UI palette    |
 | 4   | Include Convex?                          | optional backend setup            |
 | 5   | Include Vitest?                          | optional testing setup            |
@@ -42,7 +42,7 @@ All answers are collected into a single `UserChoices` object and passed straight
 
 ### Step 2 — Bootstrap Next.js (`src/scaffold.ts`)
 
-The CLI runs `create-next-app` with your selected package manager (`npx` / `pnpm dlx` / `bunx`) and passes `--use-npm` / `--use-pnpm` / `--use-bun` accordingly.
+The CLI runs `create-next-app` with your selected package manager (`npx` / `pnpm dlx`) and passes `--use-npm` / `--use-pnpm` accordingly.
 
 This gives you a clean Next.js project with:
 
@@ -92,7 +92,7 @@ These are read with `readTemplate()`, which resolves paths relative to the CLI's
 
 ### Step 5 — Initialise shadcn/ui
 
-The CLI runs shadcn with your selected package manager (`npx shadcn@latest ...`, `pnpm dlx shadcn@latest ...`, or `bunx shadcn@latest ...`).
+The CLI runs shadcn with your selected package manager (`npx shadcn@latest ...` or `pnpm dlx shadcn@latest ...`).
 
 This writes `components.json` and sets up the `components/ui/` directory.
 
@@ -159,7 +159,7 @@ When you choose **Yes** for Convex:
 
 - `npm run dev` triggers `predev` first, which ensures Convex is connected to a deployment before anything starts.
 - Then `npm-run-all` starts `next dev` and `convex dev` in parallel, so both the frontend and backend hot-reload together.
-- For initial Convex linking, use the package-manager-specific command: `npx convex dev` (npm), `pnpm dlx convex dev` (pnpm), or `bunx convex dev` (bun).
+- For initial Convex linking, use the package-manager-specific command: `npx convex dev` (npm), `pnpm dlx convex dev` (pnpm).
 
 ---
 
@@ -241,4 +241,4 @@ bin/
 ## Requirements
 
 - Node.js >= 18
-- One of: `npm`, `pnpm`, or `bun`
+- One of: `npm` or `pnpm`

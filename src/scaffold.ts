@@ -53,15 +53,6 @@ function buildCiWorkflow(
       installCmd = "pnpm install --frozen-lockfile";
       runPrefix = "pnpm";
       break;
-    case "bun":
-      setupSteps = [
-        "      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0",
-        "        with:",
-        "          bun-version: latest",
-      ].join("\n");
-      installCmd = "bun install --frozen-lockfile";
-      runPrefix = "bun run";
-      break;
     case "npm":
     default:
       setupSteps = [
@@ -360,19 +351,10 @@ export function printSummary(choices: UserChoices): void {
     includeRhfZod,
   } = choices;
 
-  const devCmd =
-    packageManager === "npm"
-      ? "npm run dev"
-      : packageManager === "pnpm"
-        ? "pnpm dev"
-        : "bun dev";
+  const devCmd = packageManager === "npm" ? "npm run dev" : "pnpm dev";
 
   const convexLinkCmd =
-    packageManager === "npm"
-      ? "npx convex dev"
-      : packageManager === "pnpm"
-        ? "pnpm dlx convex dev"
-        : "bunx convex dev";
+    packageManager === "npm" ? "npx convex dev" : "pnpm dlx convex dev";
 
   const ciSteps = [
     "lint",

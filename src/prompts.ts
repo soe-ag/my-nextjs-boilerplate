@@ -35,13 +35,12 @@ export async function runPrompts(projectNameArg?: string): Promise<UserChoices> 
   const projectName = (projectNameResult as string).trim()
 
   // 2. Package manager
-  note('Choose how dependencies will be installed.\nnpm is default, pnpm is faster with a shared cache, bun is the fastest and most modern.')
+  note('Choose how dependencies will be installed.\nnpm is the default Node.js package manager, while pnpm is faster with a shared cache.')
   const pmResult = await select<PackageManager>({
     message: 'Which package manager do you want to use?',
     options: [
       { value: 'npm' as PackageManager, label: 'npm', hint: 'default Node.js package manager' },
       { value: 'pnpm' as PackageManager, label: 'pnpm', hint: 'faster with a shared cache' },
-      { value: 'bun' as PackageManager, label: 'bun', hint: 'fastest and most modern' },
     ],
   })
 

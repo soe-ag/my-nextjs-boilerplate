@@ -40,7 +40,7 @@ You'll be guided through six prompts:
 | #   | Prompt                         | Options                                             |
 | --- | ------------------------------ | --------------------------------------------------- |
 | 1   | Project name                   | any valid folder name (default: `my-app`)           |
-| 2   | Package manager                | `npm` \| `pnpm` \| `bun`                            |
+| 2   | Package manager                | `npm` \| `pnpm`                            |
 | 3   | shadcn base color              | `slate` \| `zinc` \| `gray` \| `neutral` \| `stone` |
 | 4   | Include Convex?                | Yes / No                                            |
 | 5   | Include Vitest?                | Yes / No                                            |
@@ -132,7 +132,7 @@ When selected, the following packages are installed:
 
 ```bash
 cd my-app
-npm run dev   # or: pnpm dev / bun dev
+npm run dev   # or: pnpm dev
 ```
 
 ### If you selected Convex
@@ -141,7 +141,6 @@ npm run dev   # or: pnpm dev / bun dev
 
 - npm: `npx convex dev`
 - pnpm: `pnpm dlx convex dev`
-- bun: `bunx convex dev`
 
 2. Create a free account at [https://convex.dev](https://convex.dev) if you don't have one.
 3. The `predev` script will automatically run `convex dev --until-success` before starting the frontend.
@@ -174,7 +173,7 @@ my-app/
 ## Requirements
 
 - Node.js >= 18
-- npm, pnpm, or bun installed
+- npm or pnpm installed
 
 ---
 

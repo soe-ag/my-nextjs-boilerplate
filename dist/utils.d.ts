@@ -1,4 +1,4 @@
-export type PackageManager = "npm" | "pnpm" | "bun";
+export type PackageManager = "npm" | "pnpm";
 /**
  * Build the package-manager-specific command for one-off package execution.
  */

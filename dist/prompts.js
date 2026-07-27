@@ -24,13 +24,12 @@ async function runPrompts(projectNameArg) {
     }
     const projectName = projectNameResult.trim();
     // 2. Package manager
-    (0, prompts_1.note)('Choose how dependencies will be installed.\nnpm is default, pnpm is faster with a shared cache, bun is the fastest and most modern.');
+    (0, prompts_1.note)('Choose how dependencies will be installed.\nnpm is the default Node.js package manager, while pnpm is faster with a shared cache.');
     const pmResult = await (0, prompts_1.select)({
         message: 'Which package manager do you want to use?',
         options: [
             { value: 'npm', label: 'npm', hint: 'default Node.js package manager' },
             { value: 'pnpm', label: 'pnpm', hint: 'faster with a shared cache' },
-            { value: 'bun', label: 'bun', hint: 'fastest and most modern' },
         ],
     });
     if ((0, prompts_1.isCancel)(pmResult)) {

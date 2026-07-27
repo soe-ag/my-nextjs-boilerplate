@@ -2,12 +2,11 @@ import { execSync } from "child_process";
 import * as fs from "fs";
 import * as path from "path";
 
-export type PackageManager = "npm" | "pnpm" | "bun";
+export type PackageManager = "npm" | "pnpm";
 
 const PM_INSTALL_HELP: Record<PackageManager, string> = {
   npm: "https://docs.npmjs.com/downloading-and-installing-node-js-and-npm",
   pnpm: "https://pnpm.io/installation",
-  bun: "https://bun.sh/docs/installation",
 };
 
 /**
@@ -17,8 +16,6 @@ export function getDlxCommand(pm: PackageManager): string {
   switch (pm) {
     case "pnpm":
       return "pnpm dlx";
-    case "bun":
-      return "bunx";
     case "npm":
     default:
       return "npx";
@@ -48,10 +45,9 @@ export function runCommand(command: string, cwd?: string): void {
  * Ensure the selected package manager exists before running long scaffold steps.
  */
 export function assertPackageManagerAvailable(pm: PackageManager): void {
-  const binary = pm === "bun" ? "bun" : pm;
 
   try {
-    execSync(`${binary} --version`, {
+    execSync(`${pm} --version`, {
       stdio: "ignore",
       shell: process.platform === "win32" ? "cmd.exe" : "/bin/sh",
     });
@@ -96,8 +92,6 @@ export function getInstallCommand(
   switch (pm) {
     case "pnpm":
       return `pnpm add ${dev ? "-D " : ""}${pkgList}`;
-    case "bun":
-      return `bun add ${dev ? "-d " : ""}${pkgList}`;
     case "npm":
     default:
       return `npm install ${dev ? "--save-dev " : ""}${pkgList}`;
@@ -113,7 +107,7 @@ export function getCreateNextAppCommand(
 ): string {
   const dlx = getDlxCommand(pm);
   const useFlag =
-    pm === "npm" ? "--use-npm" : pm === "pnpm" ? "--use-pnpm" : "--use-bun";
+    pm === "npm" ? "--use-npm" : "--use-pnpm";
 
   return [
     `${dlx} create-next-app@latest ${projectName}`,

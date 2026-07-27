@@ -46,7 +46,6 @@ const path = __importStar(require("path"));
 const PM_INSTALL_HELP = {
     npm: "https://docs.npmjs.com/downloading-and-installing-node-js-and-npm",
     pnpm: "https://pnpm.io/installation",
-    bun: "https://bun.sh/docs/installation",
 };
 /**
  * Build the package-manager-specific command for one-off package execution.
@@ -55,8 +54,6 @@ function getDlxCommand(pm) {
     switch (pm) {
         case "pnpm":
             return "pnpm dlx";
-        case "bun":
-            return "bunx";
         case "npm":
         default:
             return "npx";
@@ -83,9 +80,8 @@ function runCommand(command, cwd) {
  * Ensure the selected package manager exists before running long scaffold steps.
  */
 function assertPackageManagerAvailable(pm) {
-    const binary = pm === "bun" ? "bun" : pm;
     try {
-        (0, child_process_1.execSync)(`${binary} --version`, {
+        (0, child_process_1.execSync)(`${pm} --version`, {
             stdio: "ignore",
             shell: process.platform === "win32" ? "cmd.exe" : "/bin/sh",
         });
@@ -122,8 +118,6 @@ function getInstallCommand(pm, packages, dev = false) {
     switch (pm) {
         case "pnpm":
             return `pnpm add ${dev ? "-D " : ""}${pkgList}`;
-        case "bun":
-            return `bun add ${dev ? "-d " : ""}${pkgList}`;
         case "npm":
         default:
             return `npm install ${dev ? "--save-dev " : ""}${pkgList}`;
@@ -134,7 +128,7 @@ function getInstallCommand(pm, packages, dev = false) {
  */
 function getCreateNextAppCommand(pm, projectName) {
     const dlx = getDlxCommand(pm);
-    const useFlag = pm === "npm" ? "--use-npm" : pm === "pnpm" ? "--use-pnpm" : "--use-bun";
+    const useFlag = pm === "npm" ? "--use-npm" : "--use-pnpm";
     return [
         `${dlx} create-next-app@latest ${projectName}`,
         "--typescript",
