@@ -60,6 +60,7 @@ const path = __importStar(require('path'));
 const prompts_1 = require('@clack/prompts');
 const utils_1 = require('./utils');
 const package_manager_1 = require('./package-manager');
+let activeSpinner;
 const SHADCN_COMPONENTS = [
   'button',
   'card',
@@ -177,6 +178,32 @@ function createScaffoldPlan(choices, cwd = process.cwd()) {
   };
 }
 async function scaffold(choices) {
+  const projectDir = createScaffoldPlan(choices).projectDir;
+  const existedBefore = fs.existsSync(projectDir);
+  try {
+    await executeScaffold(choices);
+  } catch (error) {
+    activeSpinner?.stop('Scaffolding failed');
+    activeSpinner = undefined;
+    const message = error instanceof Error ? error.message : String(error);
+    if (!existedBefore && fs.existsSync(projectDir)) {
+      try {
+        fs.rmSync(projectDir, { recursive: true, force: true });
+      } catch (cleanupError) {
+        const cleanupMessage =
+          cleanupError instanceof Error ? cleanupError.message : String(cleanupError);
+        throw new Error(
+          `${message}\nThe incomplete project folder could not be removed automatically: ${cleanupMessage}`,
+        );
+      }
+      throw new Error(
+        `${message}\nThe incomplete project folder was removed. You can safely try again.`,
+      );
+    }
+    throw error;
+  }
+}
+async function executeScaffold(choices) {
   const plan = createScaffoldPlan(choices);
   const { projectDir, packageManagerPolicy, dependencies, devDependencies, projectScripts } = plan;
   const {
@@ -191,14 +218,14 @@ async function scaffold(choices) {
   const dlx = packageManagerPolicy.dlxCommand;
   // ─── Pre-flight check ────────────────────────────────────────────────────
   if (fs.existsSync(projectDir)) {
-    console.error(
-      `\nError: The directory "${projectName}" already exists in ${cwd}.\nPlease choose a different project name or remove/rename the existing directory.\n`,
+    throw new Error(
+      `The directory "${projectName}" already exists in ${cwd}. Choose a different project name or remove/rename the existing directory.`,
     );
-    process.exit(1);
   }
   (0, utils_1.assertPackageManagerAvailable)(packageManager);
   // ─── Step 1: Run create-next-app ─────────────────────────────────────────
   const s = (0, prompts_1.spinner)();
+  activeSpinner = s;
   s.start('Running create-next-app…');
   (0, utils_1.runCommand)((0, utils_1.getCreateNextAppCommand)(packageManager, projectName));
   s.stop('create-next-app complete ✓');
@@ -326,6 +353,7 @@ async function scaffold(choices) {
     buildCiWorkflow(packageManagerPolicy, includeVitest),
   );
   s.stop('GitHub Actions CI workflow written ✓');
+  activeSpinner = undefined;
 }
 function printSummary(choices) {
   const { projectName, shadcnBaseColor, includeConvex, includeVitest, includeRhfZod } = choices;

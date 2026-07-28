@@ -258,6 +258,10 @@ The execution workflow consumes these two modules. This concentrates change and 
 
 `npm run check` runs those integration tests together with the architecture tests, ESLint, and Prettier checks.
 
+### Help and failure recovery
+
+`npx create-ncs-app --help` prints usage, the supported npm/pnpm choices, and examples without starting the interactive prompts. Before scaffolding, the CLI checks the Node.js version and selected package manager. If a later command fails, only a project directory that did not exist before the run is removed; existing directories are protected.
+
 ## Requirements
 
 - Node.js >= 20.12.0

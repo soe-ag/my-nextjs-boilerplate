@@ -52,6 +52,7 @@ var __importStar =
     };
   })();
 Object.defineProperty(exports, '__esModule', { value: true });
+exports.assertNodeVersion = assertNodeVersion;
 exports.getDlxCommand = getDlxCommand;
 exports.runCommand = runCommand;
 exports.assertPackageManagerAvailable = assertPackageManagerAvailable;
@@ -63,6 +64,37 @@ const child_process_1 = require('child_process');
 const fs = __importStar(require('fs'));
 const path = __importStar(require('path'));
 const package_manager_1 = require('./package-manager');
+const MIN_NODE_VERSION = [20, 12, 0];
+function getErrorDetails(error) {
+  const err = error;
+  return [err.message, err.stderr?.toString(), err.stdout?.toString()].filter(Boolean).join('\n');
+}
+function getCommandName(command) {
+  return command
+    .trim()
+    .split(/\s+/)[0]
+    .replace(/^['"]|['"]$/g, '');
+}
+function isMissingCommand(error) {
+  const err = error;
+  return (
+    err.code === 'ENOENT' ||
+    /not recognized|command not found|no such file or directory/i.test(getErrorDetails(error))
+  );
+}
+/** Verify that the Node.js runtime satisfies the package requirement. */
+function assertNodeVersion() {
+  const [major, minor, patch] = process.versions.node.split('.').map(Number);
+  const current = [major, minor, patch];
+  const supported =
+    current.some((value, index) => value > MIN_NODE_VERSION[index]) ||
+    current.every((value, index) => value === MIN_NODE_VERSION[index]);
+  if (!supported) {
+    throw new Error(
+      `Node.js ${MIN_NODE_VERSION.join('.')} or newer is required. You are running Node.js ${process.versions.node}.`,
+    );
+  }
+}
 /** Build the package-manager-specific command for one-off package execution. */
 function getDlxCommand(pm) {
   return (0, package_manager_1.getPackageManagerPolicy)(pm).dlxCommand;
@@ -76,8 +108,16 @@ function runCommand(command, cwd) {
       shell: process.platform === 'win32' ? 'cmd.exe' : '/bin/sh',
     });
   } catch (error) {
-    const err = error;
-    throw new Error(`Command failed: ${command}\n${err.stderr?.toString() ?? ''}`);
+    const commandName = getCommandName(command);
+    if (isMissingCommand(error)) {
+      const installHint =
+        commandName === 'npm' || commandName === 'npx'
+          ? 'Install Node.js, which includes npm and npx.'
+          : `Install ${commandName} and make sure it is available in your PATH.`;
+      throw new Error(`Command "${commandName}" was not found. ${installHint}`);
+    }
+    const details = getErrorDetails(error);
+    throw new Error(`Command failed: ${command}\n${details}`);
   }
 }
 /** Ensure the selected package manager exists before long scaffold steps. */
@@ -89,11 +129,12 @@ function assertPackageManagerAvailable(pm) {
       shell: process.platform === 'win32' ? 'cmd.exe' : '/bin/sh',
     });
   } catch {
+    const installHint =
+      policy.name === 'npm'
+        ? 'Install Node.js, which includes npm.'
+        : `Install pnpm from ${policy.installHelpUrl}`;
     throw new Error(
-      [
-        `Selected package manager "${policy.name}" is not installed or not available in PATH.`,
-        `Install it first: ${policy.installHelpUrl}`,
-      ].join('\n'),
+      `Package manager "${policy.name}" was not found. ${installHint}\nMake sure it is available in your PATH and try again.`,
     );
   }
 }

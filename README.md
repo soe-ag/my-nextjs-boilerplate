@@ -184,6 +184,16 @@ npm run check
 
 This runs the unit tests, full scaffold integration tests, ESLint, and Prettier checks. The integration tests build complete npm and pnpm projects in temporary directories using local fake command tools, so they verify the real workflow without network access, publishing, or deployment.
 
+## Help and failures
+
+Show usage, package-manager choices, and examples with:
+
+```bash
+npx create-ncs-app --help
+```
+
+If a scaffold step fails, the incomplete project folder created by that run is removed so you can safely try again. Existing folders are never removed. Errors identify whether Node.js, npm, pnpm, or another command is missing.
+
 ## Requirements
 
 - Node.js >= 20.12.0

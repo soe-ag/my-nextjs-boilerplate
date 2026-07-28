@@ -99,6 +99,10 @@ if (command === 'npx' || command === 'pnpm') {
   const commandArgs = command === 'pnpm' && args[0] === 'dlx' ? args.slice(1) : args;
   if (commandArgs[0] === 'create-next-app@latest') {
     createNextApp(commandArgs[1]);
+    if (process.env.FAKE_FAIL_NPX === '1') {
+      process.stderr.write('simulated create-next-app failure\n');
+      process.exit(1);
+    }
     process.exit(0);
   }
   if (commandArgs[0] === 'shadcn@latest') {

@@ -1,5 +1,7 @@
 import { PackageManager } from './package-manager';
 export { PackageManager } from './package-manager';
+/** Verify that the Node.js runtime satisfies the package requirement. */
+export declare function assertNodeVersion(): void;
 /** Build the package-manager-specific command for one-off package execution. */
 export declare function getDlxCommand(pm: PackageManager): string;
 /** Run a shell command synchronously, streaming output to the terminal. */

@@ -3,6 +3,7 @@ const assert = require('node:assert/strict');
 const path = require('node:path');
 const { createScaffoldPlan } = require('../dist/scaffold.js');
 const { getPackageManagerPolicy } = require('../dist/package-manager.js');
+const { HELP_TEXT } = require('../dist/help.js');
 
 const choices = (overrides = {}) => ({
   projectName: 'demo-app',
@@ -58,4 +59,11 @@ test('npm and pnpm policies own their command syntax', () => {
   assert.equal(pnpm.createNextAppFlag, '--use-pnpm');
   assert.equal(npm.lifecycleConfig, undefined);
   assert.equal(pnpm.lifecycleConfig.content, 'enable-pre-post-scripts=true\n');
+});
+
+test('help text documents usage and package managers', () => {
+  assert.match(HELP_TEXT, /Usage:/);
+  assert.match(HELP_TEXT, /npm/);
+  assert.match(HELP_TEXT, /pnpm/);
+  assert.match(HELP_TEXT, /npx create-ncs-app my-app/);
 });

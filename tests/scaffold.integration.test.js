@@ -96,3 +96,18 @@ test(
     });
   },
 );
+
+test('removes an incomplete project when scaffolding fails', { concurrency: false }, async () => {
+  await withFakeTools('npm', async (tempDir) => {
+    process.env.FAKE_FAIL_NPX = '1';
+    try {
+      await assert.rejects(
+        () => scaffold(choices('npm')),
+        /The incomplete project folder was removed/,
+      );
+    } finally {
+      delete process.env.FAKE_FAIL_NPX;
+    }
+    assert.equal(fs.existsSync(path.join(tempDir, 'integration-app')), false);
+  });
+});
