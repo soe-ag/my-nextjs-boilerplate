@@ -252,6 +252,12 @@ bin/
 
 The execution workflow consumes these two modules. This concentrates change and makes tests able to verify the plan and command policy without creating a real Next.js project.
 
+### Testing the complete workflow
+
+`npm run test:integration` runs the real `scaffold()` workflow for both npm and pnpm in temporary directories. Local fake command tools stand in for `create-next-app`, package installation, and shadcn. The tests then verify generated package scripts, dependencies, components, optional Convex/Vitest files, package-manager CI configuration, and pnpm lifecycle settings. Nothing is published, deployed, or downloaded.
+
+`npm run check` runs those integration tests together with the architecture tests, ESLint, and Prettier checks.
+
 ## Requirements
 
 - Node.js >= 20.12.0

@@ -176,6 +176,14 @@ The CLI first builds a scaffold plan from your choices. That plan decides the de
 
 Package-manager differences are kept in one policy adapter. npm and pnpm each provide their own install command, one-off command, create-next-app flag, CI setup, and development commands, while the scaffold workflow only asks the policy for the command it needs.
 
+## Development checks
+
+```bash
+npm run check
+```
+
+This runs the unit tests, full scaffold integration tests, ESLint, and Prettier checks. The integration tests build complete npm and pnpm projects in temporary directories using local fake command tools, so they verify the real workflow without network access, publishing, or deployment.
+
 ## Requirements
 
 - Node.js >= 20.12.0
