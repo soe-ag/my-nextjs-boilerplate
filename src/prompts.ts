@@ -1,58 +1,62 @@
-import { intro, outro, text, select, confirm, cancel, isCancel, note } from '@clack/prompts'
-import { PackageManager } from './utils'
+import { intro, text, select, confirm, cancel, isCancel, note } from '@clack/prompts';
+import { PackageManager } from './utils';
 
 export interface UserChoices {
-  projectName: string
-  packageManager: PackageManager
-  shadcnBaseColor: string
-  includeConvex: boolean
-  includeVitest: boolean
-  includeRhfZod: boolean
+  projectName: string;
+  packageManager: PackageManager;
+  shadcnBaseColor: string;
+  includeConvex: boolean;
+  includeVitest: boolean;
+  includeRhfZod: boolean;
 }
 
 export async function runPrompts(projectNameArg?: string): Promise<UserChoices> {
-  intro('🚀 create-ncs-app — Next.js + Convex + Shadcn scaffolder')
+  intro('🚀 create-ncs-app — Next.js + Convex + Shadcn scaffolder');
 
   // 1. Project name
-  note('This will be the folder name and the name field in package.json.')
+  note('This will be the folder name and the name field in package.json.');
   const projectNameResult = await text({
     message: 'What is your project name?',
     placeholder: 'my-app',
     initialValue: projectNameArg ?? 'my-app',
     validate(value) {
-      if (!value || value.trim().length === 0) return 'Project name is required'
+      if (!value || value.trim().length === 0) return 'Project name is required';
       if (!/^[a-z0-9][a-z0-9_-]*$/i.test(value.trim())) {
-        return 'Project name must start with a letter or number and can only contain letters, numbers, hyphens, and underscores'
+        return 'Project name must start with a letter or number and can only contain letters, numbers, hyphens, and underscores';
       }
     },
-  })
+  });
 
   if (isCancel(projectNameResult)) {
-    cancel('Operation cancelled.')
-    process.exit(0)
+    cancel('Operation cancelled.');
+    process.exit(0);
   }
 
-  const projectName = (projectNameResult as string).trim()
+  const projectName = (projectNameResult as string).trim();
 
   // 2. Package manager
-  note('Choose how dependencies will be installed.\nnpm is the default Node.js package manager, while pnpm is faster with a shared cache.')
+  note(
+    'Choose how dependencies will be installed.\nnpm is the default Node.js package manager, while pnpm is faster with a shared cache.',
+  );
   const pmResult = await select<PackageManager>({
     message: 'Which package manager do you want to use?',
     options: [
       { value: 'npm' as PackageManager, label: 'npm', hint: 'default Node.js package manager' },
       { value: 'pnpm' as PackageManager, label: 'pnpm', hint: 'faster with a shared cache' },
     ],
-  })
+  });
 
   if (isCancel(pmResult)) {
-    cancel('Operation cancelled.')
-    process.exit(0)
+    cancel('Operation cancelled.');
+    process.exit(0);
   }
 
-  const packageManager = pmResult as PackageManager
+  const packageManager = pmResult as PackageManager;
 
   // 3. shadcn base color
-  note('This sets the gray-scale palette used across all shadcn components.\nslate = cool blue-gray, zinc = clean neutral, gray = standard gray, neutral = warm minimal, stone = warm brownish-gray.')
+  note(
+    'This sets the gray-scale palette used across all shadcn components.\nslate = cool blue-gray, zinc = clean neutral, gray = standard gray, neutral = warm minimal, stone = warm brownish-gray.',
+  );
   const colorResult = await select<string>({
     message: 'Which base color would you like to use for shadcn/ui?',
     options: [
@@ -62,56 +66,62 @@ export async function runPrompts(projectNameArg?: string): Promise<UserChoices> 
       { value: 'neutral', label: 'neutral', hint: 'warm minimal' },
       { value: 'stone', label: 'stone', hint: 'warm brownish-gray' },
     ],
-  })
+  });
 
   if (isCancel(colorResult)) {
-    cancel('Operation cancelled.')
-    process.exit(0)
+    cancel('Operation cancelled.');
+    process.exit(0);
   }
 
-  const shadcnBaseColor = colorResult as string
+  const shadcnBaseColor = colorResult as string;
 
   // 4. Include Convex?
-  note('Convex is a real-time backend-as-a-service with a built-in database, server functions, and live queries.\nAdds convex package, sets up convex/ folder with a starter schema.ts, and adds dev:backend and predev npm scripts.\nRequires a free Convex account at convex.dev.')
+  note(
+    'Convex is a real-time backend-as-a-service with a built-in database, server functions, and live queries.\nAdds convex package, sets up convex/ folder with a starter schema.ts, and adds dev:backend and predev npm scripts.\nRequires a free Convex account at convex.dev.',
+  );
   const convexResult = await confirm({
     message: 'Include Convex (real-time backend + database)?',
     initialValue: false,
-  })
+  });
 
   if (isCancel(convexResult)) {
-    cancel('Operation cancelled.')
-    process.exit(0)
+    cancel('Operation cancelled.');
+    process.exit(0);
   }
 
-  const includeConvex = convexResult as boolean
+  const includeConvex = convexResult as boolean;
 
   // 5. Include Vitest?
-  note('Vitest is a fast Vite-native unit testing framework.\nAdds vitest, @vitejs/plugin-react, @testing-library/react, @testing-library/jest-dom, and jsdom.\nIncludes a vitest.config.ts and vitest.setup.ts to get you started immediately.')
+  note(
+    'Vitest is a fast Vite-native unit testing framework.\nAdds vitest, @vitejs/plugin-react, @testing-library/react, @testing-library/jest-dom, and jsdom.\nIncludes a vitest.config.ts and vitest.setup.ts to get you started immediately.',
+  );
   const vitestResult = await confirm({
     message: 'Include Vitest (unit testing)?',
     initialValue: false,
-  })
+  });
 
   if (isCancel(vitestResult)) {
-    cancel('Operation cancelled.')
-    process.exit(0)
+    cancel('Operation cancelled.');
+    process.exit(0);
   }
 
-  const includeVitest = vitestResult as boolean
+  const includeVitest = vitestResult as boolean;
 
   // 6. Include React Hook Form + Zod?
-  note('react-hook-form handles form state and submission with minimal re-renders.\nzod provides TypeScript-first schema validation.\n@hookform/resolvers connects them together.\nRecommended if your app has any forms.')
+  note(
+    'react-hook-form handles form state and submission with minimal re-renders.\nzod provides TypeScript-first schema validation.\n@hookform/resolvers connects them together.\nRecommended if your app has any forms.',
+  );
   const rhfResult = await confirm({
     message: 'Include React Hook Form + Zod (form handling + validation)?',
     initialValue: false,
-  })
+  });
 
   if (isCancel(rhfResult)) {
-    cancel('Operation cancelled.')
-    process.exit(0)
+    cancel('Operation cancelled.');
+    process.exit(0);
   }
 
-  const includeRhfZod = rhfResult as boolean
+  const includeRhfZod = rhfResult as boolean;
 
   return {
     projectName,
@@ -120,6 +130,5 @@ export async function runPrompts(projectNameArg?: string): Promise<UserChoices> 
     includeConvex,
     includeVitest,
     includeRhfZod,
-  }
+  };
 }
-

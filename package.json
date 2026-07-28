@@ -11,17 +11,28 @@
     "templates"
   ],
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && npm run format:dist",
     "dev": "tsc --watch",
     "prepare": "npm run build",
-    "test": "npm run build && node tests/architecture.test.js"
+    "test": "npm run build && npm run test:unit",
+    "test:unit": "node tests/architecture.test.js",
+    "lint": "eslint src tests dist bin",
+    "format": "prettier --write src/**/*.{ts,js} tests/**/*.{ts,js} bin/**/*.js dist/**/*.{js,d.ts} templates *.{json,md,mjs}",
+    "format:check": "prettier --check src/**/*.{ts,js} tests/**/*.{ts,js} bin/**/*.js dist/**/*.{js,d.ts} templates *.{json,md,mjs}",
+    "check": "npm run test && npm run lint && npm run format:check",
+    "format:dist": "prettier --write dist/**/*.{js,d.ts}"
   },
   "dependencies": {
     "@clack/prompts": "^1.7.0"
   },
   "devDependencies": {
+    "@eslint/js": "^9.39.5",
     "@types/node": "^20",
-    "typescript": "^5"
+    "eslint": "^9.39.5",
+    "globals": "^17.8.0",
+    "prettier": "^3.9.6",
+    "typescript": "^5",
+    "typescript-eslint": "^8.65.0"
   },
   "engines": {
     "node": ">=20.12.0"

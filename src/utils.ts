@@ -1,12 +1,9 @@
-import { execSync } from "child_process";
-import * as fs from "fs";
-import * as path from "path";
-import {
-  getPackageManagerPolicy,
-  PackageManager,
-} from "./package-manager";
+import { execSync } from 'child_process';
+import * as fs from 'fs';
+import * as path from 'path';
+import { getPackageManagerPolicy, PackageManager } from './package-manager';
 
-export { PackageManager } from "./package-manager";
+export { PackageManager } from './package-manager';
 
 /** Build the package-manager-specific command for one-off package execution. */
 export function getDlxCommand(pm: PackageManager): string {
@@ -18,14 +15,12 @@ export function runCommand(command: string, cwd?: string): void {
   try {
     execSync(command, {
       cwd,
-      stdio: "inherit",
-      shell: process.platform === "win32" ? "cmd.exe" : "/bin/sh",
+      stdio: 'inherit',
+      shell: process.platform === 'win32' ? 'cmd.exe' : '/bin/sh',
     });
   } catch (error) {
     const err = error as Error & { stderr?: Buffer };
-    throw new Error(
-      `Command failed: ${command}\n${err.stderr?.toString() ?? ""}`,
-    );
+    throw new Error(`Command failed: ${command}\n${err.stderr?.toString() ?? ''}`);
   }
 }
 
@@ -35,15 +30,15 @@ export function assertPackageManagerAvailable(pm: PackageManager): void {
 
   try {
     execSync(`${policy.name} --version`, {
-      stdio: "ignore",
-      shell: process.platform === "win32" ? "cmd.exe" : "/bin/sh",
+      stdio: 'ignore',
+      shell: process.platform === 'win32' ? 'cmd.exe' : '/bin/sh',
     });
   } catch {
     throw new Error(
       [
-        `Selected package manager \"${policy.name}\" is not installed or not available in PATH.`,
+        `Selected package manager "${policy.name}" is not installed or not available in PATH.`,
         `Install it first: ${policy.installHelpUrl}`,
-      ].join("\n"),
+      ].join('\n'),
     );
   }
 }
@@ -54,41 +49,34 @@ export function writeFile(filePath: string, content: string): void {
   if (!fs.existsSync(dir)) {
     fs.mkdirSync(dir, { recursive: true });
   }
-  fs.writeFileSync(filePath, content, "utf8");
+  fs.writeFileSync(filePath, content, 'utf8');
 }
 
 /** Read a template file from the templates directory. */
 export function readTemplate(templateRelPath: string): string {
-  const templatePath = path.join(__dirname, "..", "templates", templateRelPath);
-  return fs.readFileSync(templatePath, "utf8");
+  const templatePath = path.join(__dirname, '..', 'templates', templateRelPath);
+  return fs.readFileSync(templatePath, 'utf8');
 }
 
 /** Build the install command for the selected package manager. */
-export function getInstallCommand(
-  pm: PackageManager,
-  packages: string[],
-  dev = false,
-): string {
+export function getInstallCommand(pm: PackageManager, packages: string[], dev = false): string {
   return getPackageManagerPolicy(pm).installCommand(packages, dev);
 }
 
 /** Build the create-next-app command using the selected package manager. */
-export function getCreateNextAppCommand(
-  pm: PackageManager,
-  projectName: string,
-): string {
+export function getCreateNextAppCommand(pm: PackageManager, projectName: string): string {
   const policy = getPackageManagerPolicy(pm);
 
   return [
     `${policy.dlxCommand} create-next-app@latest ${projectName}`,
-    "--typescript",
-    "--tailwind",
-    "--eslint",
-    "--app",
-    "--no-src-dir",
-    "--no-import-alias",
-    "--turbopack",
+    '--typescript',
+    '--tailwind',
+    '--eslint',
+    '--app',
+    '--no-src-dir',
+    '--no-import-alias',
+    '--turbopack',
     policy.createNextAppFlag,
-    "--yes",
-  ].join(" ");
+    '--yes',
+  ].join(' ');
 }

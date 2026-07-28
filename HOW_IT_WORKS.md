@@ -28,23 +28,20 @@ This single command does the following in order:
 
 The CLI uses [`@clack/prompts`](https://github.com/bombshell-dev/clack) to ask six interactive questions:
 
-| #   | Question                                 | Feeds into                        |
-| --- | ---------------------------------------- | --------------------------------- |
-| 1   | Project name                             | folder name + `package.json` name |
+| #   | Question                         | Feeds into                        |
+| --- | -------------------------------- | --------------------------------- |
+| 1   | Project name                     | folder name + `package.json` name |
 | 2   | Package manager (`npm` / `pnpm`) | every install command             |
-| 3   | shadcn base color                        | `components.json` → UI palette    |
-| 4   | Include Convex?                          | optional backend setup            |
-| 5   | Include Vitest?                          | optional testing setup            |
-| 6   | Include React Hook Form + Zod?           | optional form setup               |
+| 3   | shadcn base color                | `components.json` → UI palette    |
+| 4   | Include Convex?                  | optional backend setup            |
+| 5   | Include Vitest?                  | optional testing setup            |
+| 6   | Include React Hook Form + Zod?   | optional form setup               |
 
 All answers are collected into a single `UserChoices` object, then converted into a `ScaffoldPlan` before the scaffold workflow runs.
 
 ---
 
 ### Step 2 — Compose the scaffold plan (`src/scaffold.ts`)
-
-
-
 
 The CLI turns the collected choices into a `ScaffoldPlan` before running any external commands. The plan contains the project directory, selected package-manager policy, runtime dependencies, dev dependencies, and the final package scripts. This gives the workflow one place to test what the generated project should contain.
 
@@ -124,8 +121,8 @@ Immediately after, the CLI **patches `components.json`** to apply your chosen se
 Then `lib/utils.ts` is written from a template — this is the `cn()` helper:
 
 ```ts
-import { clsx, type ClassValue } from "clsx";
-import { twMerge } from "tailwind-merge";
+import { clsx, type ClassValue } from 'clsx';
+import { twMerge } from 'tailwind-merge';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -247,7 +244,6 @@ bin/
 
 ---
 
-
 ### Architecture seams
 
 `createScaffoldPlan()` is the workflow’s planning seam. It is pure: given choices, it returns the generated project’s intended dependencies and scripts without touching the shell or filesystem.
@@ -255,6 +251,7 @@ bin/
 `getPackageManagerPolicy()` is the package-manager seam. The npm and pnpm adapters own all syntax differences, including installs, `npx`/`pnpm dlx`, create-next-app flags, CI commands, and pnpm’s lifecycle configuration.
 
 The execution workflow consumes these two modules. This concentrates change and makes tests able to verify the plan and command policy without creating a real Next.js project.
+
 ## Requirements
 
 - Node.js >= 20.12.0

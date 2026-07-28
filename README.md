@@ -40,7 +40,7 @@ You'll be guided through six prompts:
 | #   | Prompt                         | Options                                             |
 | --- | ------------------------------ | --------------------------------------------------- |
 | 1   | Project name                   | any valid folder name (default: `my-app`)           |
-| 2   | Package manager                | `npm` \| `pnpm`                            |
+| 2   | Package manager                | `npm` \| `pnpm`                                     |
 | 3   | shadcn base color              | `slate` \| `zinc` \| `gray` \| `neutral` \| `stone` |
 | 4   | Include Convex?                | Yes / No                                            |
 | 5   | Include Vitest?                | Yes / No                                            |
@@ -175,6 +175,7 @@ my-app/
 The CLI first builds a scaffold plan from your choices. That plan decides the dependencies, scripts, and optional features before any commands run. The execution step then applies the plan to the new project.
 
 Package-manager differences are kept in one policy adapter. npm and pnpm each provide their own install command, one-off command, create-next-app flag, CI setup, and development commands, while the scaffold workflow only asks the policy for the command it needs.
+
 ## Requirements
 
 - Node.js >= 20.12.0
