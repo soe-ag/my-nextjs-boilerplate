@@ -56,11 +56,11 @@ const POLICIES: Record<PackageManager, PackageManagerPolicy> = {
     devCommand: 'pnpm dev',
     convexLinkCommand: 'pnpm dlx convex dev',
     lifecycleConfig: {
-      fileName: '.npmrc',
-      content: 'enable-pre-post-scripts=true\n',
+      fileName: 'pnpm-workspace.yaml',
+      content: 'enablePrePostScripts: true\n',
     },
     installCommand(packages, dev = false) {
-      return `pnpm add ${dev ? '-D ' : ''}${packages.join(' ')}`;
+      return `pnpm add ${dev ? '-D ' : ''}${packages.join(' ')} --allow-build=esbuild`;
     },
   },
 };

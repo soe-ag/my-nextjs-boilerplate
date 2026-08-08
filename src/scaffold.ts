@@ -282,8 +282,7 @@ async function executeScaffold(choices: UserChoices): Promise<void> {
   if (includeConvex) {
     s.start('Setting up Convex…');
 
-    // pnpm v8 disables pre/post lifecycle scripts by default.
-    // We need enable-pre-post-scripts so that "predev" runs before "dev".
+    // Keep Convex's "predev" lifecycle hook enabled for pnpm projects.
     if (packageManagerPolicy.lifecycleConfig) {
       const config = packageManagerPolicy.lifecycleConfig;
       const configPath = path.join(projectDir, config.fileName);

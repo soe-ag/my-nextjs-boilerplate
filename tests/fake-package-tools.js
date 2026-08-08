@@ -88,6 +88,27 @@ if (command === 'npm' && args[0] === 'install') {
 }
 
 if (command === 'pnpm' && args[0] === 'add') {
+  if (args.includes('--allow-build=esbuild')) {
+    const workspaceConfigPath = path.join(cwd, 'pnpm-workspace.yaml');
+    const workspaceConfig = fs.existsSync(workspaceConfigPath)
+      ? fs.readFileSync(workspaceConfigPath, 'utf8')
+      : '';
+    if (!workspaceConfig.includes('allowBuilds:')) {
+      fs.writeFileSync(workspaceConfigPath, `${workspaceConfig}allowBuilds:\n  esbuild: true\n`);
+    }
+  }
+  if (process.env.FAKE_PNPM_REQUIRE_ESBUILD_APPROVAL === '1') {
+    const workspaceConfigPath = path.join(cwd, 'pnpm-workspace.yaml');
+    const workspaceConfig = fs.existsSync(workspaceConfigPath)
+      ? fs.readFileSync(workspaceConfigPath, 'utf8')
+      : '';
+    if (
+      !/^allowBuilds:\r?\n(?:[ \t].*\r?\n)*[ \t]+esbuild:[ \t]+true[ \t]*$/m.test(workspaceConfig)
+    ) {
+      process.stderr.write('[ERR_PNPM_IGNORED_BUILDS] Ignored build scripts: esbuild@0.27.0\n');
+      process.exit(1);
+    }
+  }
   installPackages(
     args.slice(1).filter((arg) => !arg.startsWith('-')),
     args.includes('-D'),

@@ -54,11 +54,12 @@ test('npm and pnpm policies own their command syntax', () => {
   const pnpm = getPackageManagerPolicy('pnpm');
 
   assert.equal(npm.installCommand(['react'], true), 'npm install --save-dev react');
-  assert.equal(pnpm.installCommand(['react'], true), 'pnpm add -D react');
+  assert.equal(pnpm.installCommand(['react'], true), 'pnpm add -D react --allow-build=esbuild');
   assert.equal(npm.createNextAppFlag, '--use-npm');
   assert.equal(pnpm.createNextAppFlag, '--use-pnpm');
   assert.equal(npm.lifecycleConfig, undefined);
-  assert.equal(pnpm.lifecycleConfig.content, 'enable-pre-post-scripts=true\n');
+  assert.equal(pnpm.lifecycleConfig.fileName, 'pnpm-workspace.yaml');
+  assert.equal(pnpm.lifecycleConfig.content, 'enablePrePostScripts: true\n');
 });
 
 test('help text documents usage and package managers', () => {

@@ -68,10 +68,9 @@ function assertGeneratedProject(tempDir, packageManager) {
   assert.match(workflow, packageManager === 'npm' ? /cache: 'npm'/ : /pnpm\/action-setup/);
 
   if (packageManager === 'pnpm') {
-    assert.equal(
-      fs.readFileSync(path.join(projectDir, '.npmrc'), 'utf8'),
-      'enable-pre-post-scripts=true\n',
-    );
+    const pnpmWorkspace = fs.readFileSync(path.join(projectDir, 'pnpm-workspace.yaml'), 'utf8');
+    assert.match(pnpmWorkspace, /^allowBuilds:\r?\n {2}esbuild: true$/m);
+    assert.match(pnpmWorkspace, /^enablePrePostScripts: true$/m);
   }
 }
 
@@ -91,8 +90,13 @@ test(
   { concurrency: false },
   async () => {
     await withFakeTools('pnpm', async (tempDir) => {
-      await scaffold(choices('pnpm'));
-      assertGeneratedProject(tempDir, 'pnpm');
+      process.env.FAKE_PNPM_REQUIRE_ESBUILD_APPROVAL = '1';
+      try {
+        await scaffold(choices('pnpm'));
+        assertGeneratedProject(tempDir, 'pnpm');
+      } finally {
+        delete process.env.FAKE_PNPM_REQUIRE_ESBUILD_APPROVAL;
+      }
     });
   },
 );
