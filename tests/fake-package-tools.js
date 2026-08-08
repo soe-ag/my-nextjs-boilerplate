@@ -49,6 +49,7 @@ function runShadcn(args) {
       path.join(cwd, 'components.json'),
       JSON.stringify(
         {
+          base: args[args.indexOf('--base') + 1],
           style: 'default',
           rsc: false,
           tsx: true,

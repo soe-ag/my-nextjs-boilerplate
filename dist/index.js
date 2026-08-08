@@ -16,10 +16,10 @@ async function main() {
     const choices = await (0, prompts_2.runPrompts)(projectNameArg);
     await (0, scaffold_1.scaffold)(choices);
     (0, scaffold_1.printSummary)(choices);
-    (0, prompts_1.outro)('Happy building! 脂');
+    (0, prompts_1.outro)('Happy building!');
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    console.error(`\n笶・Error: ${message}\n`);
+    console.error(`\nError: ${message}\n`);
     process.exit(1);
   }
 }

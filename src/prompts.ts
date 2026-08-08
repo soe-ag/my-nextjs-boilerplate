@@ -93,7 +93,7 @@ export async function runPrompts(projectNameArg?: string): Promise<UserChoices> 
 
   // 5. Include Vitest?
   note(
-    'Vitest is a fast Vite-native unit testing framework.\nAdds vitest, @vitejs/plugin-react, @testing-library/react, @testing-library/jest-dom, and jsdom.\nIncludes a vitest.config.ts and vitest.setup.ts to get you started immediately.',
+    'Vitest is a fast Vite-native unit testing framework.\nAdds vitest, @vitejs/plugin-react, @testing-library/react, @testing-library/jest-dom, and jsdom.\nIncludes a vitest.config.mts and vitest.setup.ts to get you started immediately.',
   );
   const vitestResult = await confirm({
     message: 'Include Vitest (unit testing)?',

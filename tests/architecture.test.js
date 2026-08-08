@@ -57,6 +57,7 @@ test('npm and pnpm policies own their command syntax', () => {
   assert.equal(pnpm.installCommand(['react'], true), 'pnpm add -D react --allow-build=esbuild');
   assert.equal(npm.createNextAppFlag, '--use-npm');
   assert.equal(pnpm.createNextAppFlag, '--use-pnpm');
+  assert.doesNotMatch(pnpm.ciSetupSteps, /version: 9/);
   assert.equal(npm.lifecycleConfig, undefined);
   assert.equal(pnpm.lifecycleConfig.fileName, 'pnpm-workspace.yaml');
   assert.equal(pnpm.lifecycleConfig.content, 'enablePrePostScripts: true\n');

@@ -61,9 +61,10 @@ function assertGeneratedProject(tempDir, packageManager) {
   assert.equal(packageJson.dependencies['react-hook-form'], '0.0.0-test');
   assert.equal(packageJson.devDependencies.vitest, '0.0.0-test');
   assert.equal(componentsJson.style, 'new-york');
+  assert.equal(componentsJson.base, 'radix');
   assert.equal(componentsJson.tailwind.baseColor, 'slate');
   assert.ok(fs.existsSync(path.join(projectDir, 'convex', 'schema.ts')));
-  assert.ok(fs.existsSync(path.join(projectDir, 'vitest.config.ts')));
+  assert.ok(fs.existsSync(path.join(projectDir, 'vitest.config.mts')));
   assert.ok(fs.existsSync(path.join(projectDir, 'components', 'ui', 'button.tsx')));
   assert.match(workflow, packageManager === 'npm' ? /cache: 'npm'/ : /pnpm\/action-setup/);
 

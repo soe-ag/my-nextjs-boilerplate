@@ -255,7 +255,7 @@ async function executeScaffold(choices) {
   // written to globals.css.  The user's chosen base color is patched into
   // components.json below so that any future `shadcn add` commands respect it.
   s.start('Initialising shadcn/ui…');
-  (0, utils_1.runCommand)(`${dlx} shadcn@latest init --yes`, projectDir);
+  (0, utils_1.runCommand)(`${dlx} shadcn@latest init --preset vega --base radix --yes`, projectDir);
   s.stop('shadcn/ui initialised ✓');
   // ─── Step 5: Update components.json with chosen settings ──────────────────
   // Read what shadcn init generated and update only the fields we need
@@ -336,8 +336,8 @@ async function executeScaffold(choices) {
   if (includeVitest) {
     s.start('Setting up Vitest…');
     (0, utils_1.writeFile)(
-      path.join(projectDir, 'vitest.config.ts'),
-      (0, utils_1.readTemplate)('vitest.config.ts.template'),
+      path.join(projectDir, 'vitest.config.mts'),
+      (0, utils_1.readTemplate)('vitest.config.mts.template'),
     );
     (0, utils_1.writeFile)(
       path.join(projectDir, 'vitest.setup.ts'),

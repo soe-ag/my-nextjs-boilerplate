@@ -16,10 +16,10 @@ async function main(): Promise<void> {
     const choices = await runPrompts(projectNameArg);
     await scaffold(choices);
     printSummary(choices);
-    outro('Happy building! 脂');
+    outro('Happy building!');
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    console.error(`\n笶・Error: ${message}\n`);
+    console.error(`\nError: ${message}\n`);
     process.exit(1);
   }
 }

@@ -72,7 +72,7 @@ async function runPrompts(projectNameArg) {
   const includeConvex = convexResult;
   // 5. Include Vitest?
   (0, prompts_1.note)(
-    'Vitest is a fast Vite-native unit testing framework.\nAdds vitest, @vitejs/plugin-react, @testing-library/react, @testing-library/jest-dom, and jsdom.\nIncludes a vitest.config.ts and vitest.setup.ts to get you started immediately.',
+    'Vitest is a fast Vite-native unit testing framework.\nAdds vitest, @vitejs/plugin-react, @testing-library/react, @testing-library/jest-dom, and jsdom.\nIncludes a vitest.config.mts and vitest.setup.ts to get you started immediately.',
   );
   const vitestResult = await (0, prompts_1.confirm)({
     message: 'Include Vitest (unit testing)?',
